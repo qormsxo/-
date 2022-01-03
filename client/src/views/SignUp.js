@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 // @material-ui/core components
 import { makeStyles } from "@material-ui/core/styles";
 import InputAdornment from "@material-ui/core/InputAdornment";
 // import Icon from "@material-ui/core/Icon";
 // @material-ui/icons
-import Email from "@material-ui/icons/Email";
+import KeyIcon from "@mui/icons-material/Key";
 import People from "@material-ui/icons/People";
 
 import TextField from "@mui/material/TextField";
@@ -49,40 +49,62 @@ export default function SignUp(props) {
     setCardAnimation("");
   }, 700);
 
+  useEffect(async () => {
+    await axios
+      .get("http://10.10.10.168:3001/session", {
+        "Content-type": "application/json",
+        Accept: "application/json",
+        Cache: "no-cache",
+        withCredentials: true,
+      })
+      .then((response) => {
+        if (response.data !== "") {
+          window.location.href = "/";
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }, []);
+
   const [classicModal, setClassicModal] = React.useState(false); // 모달
 
   // input state
   const [inputs, setInputs] = useState({
     name: "",
-    email: "",
+    userId: "",
+    phone: "",
     pass: "",
   });
 
-  const { name, email, pass } = inputs;
+  const { name, userId, phone, pass } = inputs;
 
   // helperText State
   const [helperText, setHelperText] = useState({
     nameHepler: " ",
-    emailHelper: " ",
+    userIdHelper: " ",
+    phoneHelper: " ",
     passHepler: " ",
   });
 
-  const { nameHepler, emailHelper, passHepler } = helperText;
+  const { nameHepler, userIdHelper, phoneHelper, passHepler } = helperText;
 
   // input error state
   const [boolean, setBoolean] = useState({
     nameError: false,
-    emailError: false,
+    userIdError: false,
+    phoneError: false,
     passError: false,
   });
 
-  const { nameError, emailError, passError } = boolean;
+  const { nameError, userIdError, phoneError, passError } = boolean;
 
   //  널 체크 후 텍스트 입력 시 원상복구
   const validation = (id, boolean, value) => {
     if (id && boolean && value) {
       return true;
     } else {
+      console.log(id, boolean, value);
       return false;
     }
   };
@@ -92,18 +114,21 @@ export default function SignUp(props) {
     const { id, value } = e.target;
 
     let name = validation(id === "name", nameError, value);
-    let email = validation(id === "email", emailError, value);
+    let userId = validation(id === "userId", userIdError, value);
+    let phone = validation(id === "phone", phoneError, value);
     let pass = validation(id === "pass", passError, value);
 
     setBoolean({
       nameError: name ? false : nameError,
-      emailError: email ? false : emailError,
+      userIdError: userId ? false : userIdError,
+      phoneError: phone ? false : phoneError,
       passError: pass ? false : passError,
     });
 
     setHelperText({
       nameHepler: name ? " " : nameHepler,
-      emailHelper: email ? " " : emailHelper,
+      userIdHelper: userId ? " " : userIdHelper,
+      phoneHelper: phone ? " " : phoneHelper,
       passHepler: pass ? " " : passHepler,
     });
 
@@ -116,25 +141,29 @@ export default function SignUp(props) {
   // 널체크 및 요청 보내기
   const isNull = () => {
     let nameCheck = !name.trim();
-    let emailCheck = !email.trim();
+    let userIdCheck = !userId.trim();
+    let phoneCheck = !phone;
     let passCheck = !pass.trim();
 
     setBoolean({
       nameError: nameCheck ? true : false,
-      emailError: emailCheck ? true : false,
+      userIdError: userIdCheck ? true : false,
+      phoneError: phoneCheck ? true : false,
       passError: passCheck ? true : false,
     });
 
     setHelperText({
       nameHepler: nameCheck ? "이름을 입력해주세요" : nameHepler,
-      emailHelper: emailCheck ? "이메일을 입력해주세요" : emailHelper,
+      userIdHelper: userIdCheck ? "이메일을 입력해주세요" : userIdHelper,
+      phoneHelper: phoneCheck ? "전화번호를 입력해주세요" : phoneHelper,
       passHepler: passCheck ? "비밀번호를 입력해주세요" : passHepler,
     });
     const createUser = async () => {
       await axios
         .post("http://10.10.10.168:3001/user", {
           name: name,
-          email: email,
+          id: userId,
+          phone: phone,
           password: pass,
         })
         .then((response) => {
@@ -145,12 +174,14 @@ export default function SignUp(props) {
           } else if (!response.data.status) {
             setBoolean({
               nameError,
-              emailError: true,
+              userIdError: true,
+              phoneError,
               passError,
             });
             setHelperText({
               nameHepler,
-              emailHelper: response.data.message,
+              userIdHelper: response.data.message,
+              phoneError,
               passHepler,
             });
           }
@@ -159,13 +190,13 @@ export default function SignUp(props) {
           console.error(error);
         });
     };
-    if (name && email && pass) {
+    if (name && userId && pass && phone) {
       createUser();
     }
   };
 
   //   const [name, setName] = useState("");
-  //   const [email, setEmail] = useState("");
+  //   const [userId, setuserId] = useState("");
   //   const [pw, setPw] = useState("");
 
   const classes = useStyles();
@@ -220,18 +251,37 @@ export default function SignUp(props) {
 
                     <TextField
                       fullWidth
-                      helperText={emailHelper}
+                      helperText={userIdHelper}
                       variant="standard"
-                      label="Email..."
-                      id="email"
-                      error={emailError}
+                      label="ID..."
+                      id="userId"
+                      error={userIdError}
                       InputProps={{
-                        type: "email",
+                        type: "text",
                         onChange: (e) => onChange(e),
-                        value: email,
+                        value: userId,
                         endAdornment: (
                           <InputAdornment position="end">
-                            <Email className={classes.inputIconsColor} />
+                            <KeyIcon className={classes.inputIconsColor} />
+                          </InputAdornment>
+                        ),
+                        autoComplete: "off",
+                      }}
+                    />
+                    <TextField
+                      fullWidth
+                      helperText={phoneHelper}
+                      variant="standard"
+                      label="Phone..."
+                      id="phone"
+                      error={phoneError}
+                      InputProps={{
+                        type: "text",
+                        onChange: (e) => onChange(e),
+                        value: phone,
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <LockIcon />
                           </InputAdornment>
                         ),
                         autoComplete: "off",

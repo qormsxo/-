@@ -29,7 +29,7 @@ export default function HeaderLinks(props) {
   // console.log(isLoggedIn, userObj);
   const logout = async () => {
     await axios
-      .post("http://10.10.10.168:3001/logout", {
+      .post("http://10.10.10.168:3001/logout", null, {
         withCredentials: true,
       })
       .then((response) => {
@@ -42,7 +42,7 @@ export default function HeaderLinks(props) {
   return (
     <div>
       {isLoggedIn ? (
-        <List>
+        <List className={classes.list}>
           <ListItem className={classes.listItem}>
             <Link to="/profile" className={classes.white}>
               <Button
@@ -51,7 +51,7 @@ export default function HeaderLinks(props) {
                 target="_blank"
                 className={classes.navLink}
               >
-                <p>{userObj.user_name}</p>
+                <h6 style={{ marginTop: "5px" }}>{userObj.user_name}</h6>
               </Button>
             </Link>
           </ListItem>
@@ -62,18 +62,29 @@ export default function HeaderLinks(props) {
               target="_blank"
               className={classes.navLink}
             >
-              <p>Logout</p>
+              <h6 style={{ marginTop: "5px" }}>Logout</h6>
             </Button>
           </ListItem>
           <ListItem className={classes.listItem}>
-            <Link to="/" className={classes.white}>
+            <Link to="/report" className={classes.white}>
               <Button
                 href=""
                 color="transparent"
                 target="_blank"
                 className={classes.navLink}
               >
-                <p>제보 조회</p>
+                <h6 style={{ marginTop: "5px" }}>제보 조회</h6>
+              </Button>
+            </Link>
+          </ListItem>
+          <ListItem className={classes.listItem}>
+            <Link to="/species" className={classes.white}>
+              <Button
+                color="transparent"
+                target="_blank"
+                className={classes.navLink}
+              >
+                <h6 style={{ marginTop: "5px" }}>멸종위기종 조회</h6>
               </Button>
             </Link>
           </ListItem>
@@ -88,7 +99,7 @@ export default function HeaderLinks(props) {
                 target="_blank"
                 className={classes.navLink}
               >
-                <p>Sign Up</p>
+                <h6 style={{ marginTop: "5px" }}>Sign Up</h6>
               </Button>
             </Link>
           </ListItem>
@@ -100,7 +111,30 @@ export default function HeaderLinks(props) {
                 target="_blank"
                 className={classes.navLink}
               >
-                <p>Log In</p>
+                <h6 style={{ marginTop: "5px" }}>Log In</h6>
+              </Button>
+            </Link>
+          </ListItem>
+          <ListItem className={classes.listItem}>
+            <Link to="/report" className={classes.white}>
+              <Button
+                href=""
+                color="transparent"
+                target="_blank"
+                className={classes.navLink}
+              >
+                <h6 style={{ marginTop: "5px" }}> 제보 조회</h6>
+              </Button>
+            </Link>
+          </ListItem>
+          <ListItem className={classes.listItem}>
+            <Link to="/species" className={classes.white}>
+              <Button
+                color="transparent"
+                target="_blank"
+                className={classes.navLink}
+              >
+                <h6 style={{ marginTop: "5px" }}>멸종위기종 조회</h6>
               </Button>
             </Link>
           </ListItem>

@@ -34,12 +34,12 @@ exports.main = (req, res) => {
 exports.insertUser = (req, res) => {
   console.log(req.body);
 
-  let checkSql = "SELECT user_email FROM user_tbl WHERE user_email = ?";
+  let checkSql = "SELECT user_id FROM user_tbl WHERE user_id = ?";
 
   let checkInfo = {
     dbName: "endangered",
     query: checkSql,
-    params: [req.body.email],
+    params: [req.body.id],
   };
 
   crud.sql(checkInfo, (docs) => {
@@ -47,11 +47,11 @@ exports.insertUser = (req, res) => {
     // 겹치는 이메일이 없을 시
     if (!docs[0]) {
       // 등록
-      let sql = "INSERT INTO user_tbl values(?,?,?,NOW())";
+      let sql = "INSERT INTO user_tbl values(?,?,?,?,NOW())";
       let setInfo = {
         dbName: "endangered",
         query: sql,
-        params: [req.body.email, req.body.password, req.body.name],
+        params: [req.body.id, req.body.password, req.body.name, req.body.phone],
       };
       crud.sql(setInfo, (result) => {
         console.log(result);
@@ -61,8 +61,8 @@ exports.insertUser = (req, res) => {
           res.send(404);
         }
       });
-    } else if (Object.keys(docs[0]).includes("user_email")) {
-      res.send({ status: false, message: "사용중인 이메일입니다." });
+    } else if (Object.keys(docs[0]).includes("user_id")) {
+      res.send({ status: false, message: "사용중인 아이디입니다." });
     } else {
       res.send(404);
     }
@@ -73,12 +73,12 @@ exports.login = (req, res) => {
   console.log(req.body);
 
   let loginSql =
-    "SELECT user_name, user_email FROM user_tbl WHERE user_email = ? AND user_pw = ?";
+    "SELECT user_name, user_id, user_phone FROM user_tbl WHERE user_id = ? AND user_pw = ?";
 
   let loginInfo = {
     dbName: "endangered",
     query: loginSql,
-    params: [req.body.email, req.body.password],
+    params: [req.body.id, req.body.password],
   };
 
   crud.sql(loginInfo, (callback) => {
@@ -88,7 +88,7 @@ exports.login = (req, res) => {
         status: false,
         message: "이메일 또는 비밀번호를 다시 확인해주세요.",
       });
-    } else if (Object.keys(callback[0]).includes("user_email")) {
+    } else if (Object.keys(callback[0]).includes("user_id")) {
       req.session.loginData = callback[0];
       req.session.save(function (error) {
         console.log(req.session);
@@ -108,7 +108,7 @@ exports.logout = (req, res) => {
     if (err) {
       console.log(err);
     } else {
-      res.send(200);
+      res.sendStatus(200);
     }
   });
 };

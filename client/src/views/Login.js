@@ -41,38 +41,53 @@ const useStyles = makeStyles(styles);
 
 export default function SignUp(props) {
   const [cardAnimaton, setCardAnimation] = React.useState("cardHidden");
-  useEffect(() => {
-    setTimeout(function () {
-      setCardAnimation("");
-    }, 700);
-  }, []);
+  setTimeout(function () {
+    setCardAnimation("");
+  }, 700);
 
+  useEffect(async () => {
+    await axios
+      .get("http://10.10.10.168:3001/session", {
+        "Content-type": "application/json",
+        Accept: "application/json",
+        Cache: "no-cache",
+        withCredentials: true,
+      })
+      .then((response) => {
+        if (response.data !== "") {
+          window.location.href = "/";
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }, []);
   //const [classicModal, setClassicModal] = React.useState(false); // 모달
 
   // input state
   const [inputs, setInputs] = useState({
     name: "",
-    email: "",
+    userId: "",
     pass: "",
   });
 
-  const { email, pass } = inputs;
+  const { userId, pass } = inputs;
 
   // helperText State
   const [helperText, setHelperText] = useState({
-    emailHelper: " ",
+    userIdHelper: " ",
     passHepler: " ",
   });
 
-  const { emailHelper, passHepler } = helperText;
+  const { userIdHelper, passHepler } = helperText;
 
   // input error state
   const [boolean, setBoolean] = useState({
-    emailError: false,
+    userIdError: false,
     passError: false,
   });
 
-  const { emailError, passError } = boolean;
+  const { userIdError, passError } = boolean;
 
   //  널 체크 후 텍스트 입력 시 원상복구
   const validation = (id, boolean, value) => {
@@ -87,16 +102,16 @@ export default function SignUp(props) {
   const onChange = (e) => {
     const { id, value } = e.target;
 
-    let email = validation(id === "email", emailError, value);
+    let userId = validation(id === "userId", userIdError, value);
     let pass = validation(id === "pass", passError, value);
 
     setBoolean({
-      emailError: email ? false : emailError,
+      userIdError: userId ? false : userIdError,
       passError: pass ? false : passError,
     });
 
     setHelperText({
-      emailHelper: email ? " " : emailHelper,
+      userIdHelper: userId ? " " : userIdHelper,
       passHepler: pass ? " " : passHepler,
     });
 
@@ -108,16 +123,16 @@ export default function SignUp(props) {
 
   // 널체크 및 요청 보내기
   const isNull = () => {
-    let emailCheck = !email.trim();
+    let userIdCheck = !userId.trim();
     let passCheck = !pass.trim();
 
     setBoolean({
-      emailError: emailCheck ? true : false,
+      userIdError: userIdCheck ? true : false,
       passError: passCheck ? true : false,
     });
 
     setHelperText({
-      emailHelper: emailCheck ? "이메일을 입력해주세요" : emailHelper,
+      userIdHelper: userIdCheck ? "이메일을 입력해주세요" : userIdHelper,
       passHepler: passCheck ? "비밀번호를 입력해주세요" : passHepler,
     });
     const login = async () => {
@@ -125,7 +140,7 @@ export default function SignUp(props) {
         .post(
           "http://10.10.10.168:3001/login",
           {
-            email: email,
+            id: userId,
             password: pass,
           },
           {
@@ -137,11 +152,11 @@ export default function SignUp(props) {
             window.location.href = "/";
           } else if (!response.data.status) {
             setBoolean({
-              emailError: true,
+              userIdError: true,
               passError: true,
             });
             setHelperText({
-              emailHelper: emailHelper,
+              userIdHelper: userIdHelper,
               passHepler: response.data.message,
             });
           }
@@ -150,13 +165,13 @@ export default function SignUp(props) {
           console.error(error);
         });
     };
-    if (email && pass) {
+    if (userId && pass) {
       login();
     }
   };
 
   //   const [name, setName] = useState("");
-  //   const [email, setEmail] = useState("");
+  //   const [userId, setuserId] = useState("");
   //   const [pw, setPw] = useState("");
 
   const classes = useStyles();
@@ -189,15 +204,15 @@ export default function SignUp(props) {
                   <CardBody>
                     <TextField
                       fullWidth
-                      helperText={emailHelper}
+                      helperText={userIdHelper}
                       variant="standard"
-                      label="Email..."
-                      id="email"
-                      error={emailError}
+                      label="ID..."
+                      id="userId"
+                      error={userIdError}
                       InputProps={{
-                        type: "email",
+                        type: "text",
                         onChange: (e) => onChange(e),
-                        value: email,
+                        value: userId,
                         endAdornment: (
                           <InputAdornment position="end">
                             <People className={classes.inputIconsColor} />

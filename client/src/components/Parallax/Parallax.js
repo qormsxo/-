@@ -61,7 +61,7 @@ Parallax.propTypes = {
   className: PropTypes.string,
   filter: PropTypes.bool,
   children: PropTypes.node,
-  style: PropTypes.string,
+  style: PropTypes.object, // String 이였던거 obj 로 바꿈 왜 String 인거임?
   image: PropTypes.string,
   small: PropTypes.bool,
 };

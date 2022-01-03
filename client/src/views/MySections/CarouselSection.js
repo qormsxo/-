@@ -10,9 +10,9 @@ import GridContainer from "components/Grid/GridContainer.js";
 import GridItem from "components/Grid/GridItem.js";
 import Card from "components/Card/Card.js";
 
-import image1 from "assets/img/bg.jpg";
-import image2 from "assets/img/bg2.jpg";
-import image3 from "assets/img/bg3.jpg";
+import image1 from "assets/img/main/platalea minor.jpg";
+import image2 from "assets/img/main/frog.jpg";
+import image3 from "assets/img/main/sedirea japonica.jpg";
 
 import styles from "assets/jss/material-kit-react/views/componentsSections/carouselStyle.js";
 
@@ -40,7 +40,7 @@ export default function SectionCarousel() {
                   <div className="slick-caption">
                     <h4>
                       {/* <LocationOn className="slick-icons" /> */}
-                      동물 사진 넣을 예정
+                      저어새 (멸종위기 야생생물 1급)
                     </h4>
                   </div>
                 </div>
@@ -53,7 +53,7 @@ export default function SectionCarousel() {
                   <div className="slick-caption">
                     <h4>
                       {/* <LocationOn className="slick-icons" /> */}
-                      동물 사진 넣을 예정
+                      수원청개구리 (멸종위기 야생생물 1급)
                     </h4>
                   </div>
                 </div>
@@ -62,7 +62,7 @@ export default function SectionCarousel() {
                   <div className="slick-caption">
                     <h4>
                       {/* <LocationOn className="slick-icons" /> */}
-                      동물 사진 넣을 예정
+                      나도풍란 (멸종위기 야생생물 1급)
                     </h4>
                   </div>
                 </div>

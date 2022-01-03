@@ -31,9 +31,6 @@ function Main(props) {
   useEffect(async () => {
     await axios
       .get("http://10.10.10.168:3001/session", {
-        "Content-type": "application/json",
-        Accept: "application/json",
-        Cache: "no-cache",
         withCredentials: true,
       })
       .then((response) => {
@@ -63,13 +60,14 @@ function Main(props) {
         {...rest}
       />
       {/* <Parallax image={img}> */}
-      <Parallax image={require("assets/img/landing-bg.jpg")}>
+      {/* <Parallax image={require("assets/img/landing-bg.jpg")}> */}
+      <Parallax image={require("assets/img/main/혹고니.jpg")}>
         <div className={classes.container}>
           <GridContainer>
             <GridItem>
               <div className={classes.brand}>
-                <h3 className={classes.subtitle}>서브 타이틀</h3>
-                <h2 className={classes.title}>메인화면</h2>
+                <h3 className={classes.subtitle}>한반도 멸종위기종</h3>
+                <h2 className={classes.title}>야생생물이 살아납니다!</h2>
               </div>
             </GridItem>
           </GridContainer>
@@ -77,7 +75,6 @@ function Main(props) {
       </Parallax>
 
       <div className={classNames(classes.main, classes.mainRaised)}>
-        {/* <MainSections /> */}
         <div className={classes.container}>
           <Carousel />
           <ProductSection />
