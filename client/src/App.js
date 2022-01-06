@@ -1,6 +1,7 @@
 import AppRouter from "routers/Routers";
 import { ThemeProvider } from "@material-ui/core/styles";
 import { unstable_createMuiStrictModeTheme } from "@material-ui/core/styles";
+
 const theme = unstable_createMuiStrictModeTheme();
 function App() {
   return (

@@ -172,6 +172,7 @@ CustomDropdown.defaultProps = {
 
 CustomDropdown.propTypes = {
   hoverColor: PropTypes.oneOf([
+    "default",
     "black",
     "primary",
     "info",

@@ -3,7 +3,7 @@ import React from "react";
 // import DeleteIcon from "@material-ui/icons/Delete";
 // import IconButton from "@material-ui/core/IconButton";
 // react components for routing our app without refresh
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import axios from "axios";
 // @material-ui/core components
@@ -27,13 +27,14 @@ export default function HeaderLinks(props) {
   const classes = useStyles();
   const { isLoggedIn, userObj } = props;
   // console.log(isLoggedIn, userObj);
+  const nav = useNavigate();
   const logout = async () => {
     await axios
       .post("http://10.10.10.168:3001/logout", null, {
         withCredentials: true,
       })
       .then((response) => {
-        window.location.href = "/";
+        nav("/");
       })
       .catch((error) => {
         console.error(error);
@@ -65,7 +66,26 @@ export default function HeaderLinks(props) {
               <h6 style={{ marginTop: "5px" }}>Logout</h6>
             </Button>
           </ListItem>
-          <ListItem className={classes.listItem}>
+          <ListItem className={classes.listItem} style={{ marginTop: "4px" }}>
+            <CustomDropdown
+              noLiPadding
+              buttonText="제보"
+              buttonProps={{
+                className: classes.navLink,
+                color: "transparent",
+              }}
+              hoverColor="default"
+              dropdownList={[
+                <Link to="/report" className={classes.dropdownLink}>
+                  제보조회
+                </Link>,
+                <Link to="/do-report" className={classes.dropdownLink}>
+                  제보하기
+                </Link>,
+              ]}
+            />
+          </ListItem>
+          {/* <ListItem className={classes.listItem}>
             <Link to="/report" className={classes.white}>
               <Button
                 href=""
@@ -76,7 +96,7 @@ export default function HeaderLinks(props) {
                 <h6 style={{ marginTop: "5px" }}>제보 조회</h6>
               </Button>
             </Link>
-          </ListItem>
+          </ListItem> */}
           <ListItem className={classes.listItem}>
             <Link to="/species" className={classes.white}>
               <Button
@@ -115,7 +135,26 @@ export default function HeaderLinks(props) {
               </Button>
             </Link>
           </ListItem>
-          <ListItem className={classes.listItem}>
+          <ListItem className={classes.listItem} style={{ marginTop: "4px" }}>
+            <CustomDropdown
+              noLiPadding
+              buttonText="제보"
+              buttonProps={{
+                className: classes.navLink,
+                color: "transparent",
+              }}
+              hoverColor="default"
+              dropdownList={[
+                <Link to="/report" className={classes.dropdownLink}>
+                  제보조회
+                </Link>,
+                <Link to="/do-report" className={classes.dropdownLink}>
+                  제보하기
+                </Link>,
+              ]}
+            />
+          </ListItem>
+          {/* <ListItem className={classes.listItem}>
             <Link to="/report" className={classes.white}>
               <Button
                 href=""
@@ -126,7 +165,7 @@ export default function HeaderLinks(props) {
                 <h6 style={{ marginTop: "5px" }}> 제보 조회</h6>
               </Button>
             </Link>
-          </ListItem>
+          </ListItem> */}
           <ListItem className={classes.listItem}>
             <Link to="/species" className={classes.white}>
               <Button

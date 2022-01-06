@@ -17,7 +17,7 @@ var server = http.createServer(app);
 // require(path.join(__dirname, "app/pages/pages.js"))(app);
 require("./app/pages/pages")(app);
 
-app.use("/node_modules", express.static(path.join(__dirname, "/node_modules")));
+app.use("/uploads", express.static(path.join(__dirname, "/uploads")));
 
 //포트 설정(config에서 가져오기)
 app.set("port", config.get("port"));

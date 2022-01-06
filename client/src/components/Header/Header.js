@@ -15,6 +15,7 @@ import Drawer from "@material-ui/core/Drawer";
 import Menu from "@material-ui/icons/Menu";
 // core components
 import styles from "assets/jss/material-kit-react/components/headerStyle.js";
+import { useNavigate } from "react-router-dom";
 
 const useStyles = makeStyles(styles);
 
@@ -60,11 +61,9 @@ export default function Header(props) {
     [classes.absolute]: absolute,
     [classes.fixed]: fixed,
   });
+  const nav = useNavigate();
   const brandComponent = (
-    <Button
-      className={classes.title}
-      onClick={() => (window.location.href = "/")}
-    >
+    <Button className={classes.title} onClick={() => nav("/")}>
       {brand}
     </Button>
   );

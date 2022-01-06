@@ -22,14 +22,15 @@ import styles from "assets/jss/material-kit-react/views/componentsSections/typog
 
 const useStyles = makeStyles(styles);
 
-export default function SectionTypography() {
+export default function SectionTypography(props) {
+  const { text, icon } = props;
   const classes = useStyles();
   return (
     <div className={classes.container}>
       <Success
         children={
           <h3>
-            <SpaIcon /> &nbsp; 발견제보
+            {icon} &nbsp; {text}
           </h3>
         }
       />

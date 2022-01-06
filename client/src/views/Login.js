@@ -24,6 +24,7 @@ import CardFooter from "components/Card/CardFooter.js";
 
 import image from "assets/img/bg7.jpg";
 import styles from "assets/jss/material-kit-react/views/loginPage.js";
+import { useNavigate } from "react-router-dom";
 
 // import {
 //   Dialog,
@@ -45,6 +46,7 @@ export default function SignUp(props) {
     setCardAnimation("");
   }, 700);
 
+  const nav = useNavigate();
   useEffect(async () => {
     await axios
       .get("http://10.10.10.168:3001/session", {
@@ -55,7 +57,7 @@ export default function SignUp(props) {
       })
       .then((response) => {
         if (response.data !== "") {
-          window.location.href = "/";
+          nav("/");
         }
       })
       .catch((error) => {
@@ -149,7 +151,7 @@ export default function SignUp(props) {
         )
         .then((response) => {
           if (response.data.status) {
-            window.location.href = "/";
+            nav("/");
           } else if (!response.data.status) {
             setBoolean({
               userIdError: true,

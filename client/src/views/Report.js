@@ -15,23 +15,28 @@ import HeaderLinks from "components/Header/HeaderLinks.js";
 import Pagination from "@mui/material/Pagination";
 import Footer from "components/Footer/Footer";
 import Typography from "./MySections/TypographySection";
-import List from "@material-ui/core/List";
-import ListItem from "@material-ui/core/ListItem";
-import Button from "components/CustomButtons/Button.js";
+// @material-ui/icons
+import SpaIcon from "@mui/icons-material/Spa";
 
 import styles from "assets/jss/material-kit-react/views/components.js";
+
 import { PaginationItem } from "@mui/material";
+import Success from "components/Typography/Success";
+import { useNavigate } from "react-router-dom";
 
 const useStyles = makeStyles(styles);
 
 function Report(props) {
   const classes = useStyles();
+
   const { ...rest } = props;
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userObj, setUserObj] = useState({});
 
   const [rows, setRows] = useState([]);
+  const [rowCount, setRowCount] = useState(0);
+  const [page, setPage] = useState(0); //처음 페이지는 0
   useEffect(async () => {
     await axios
       .get("http://10.10.10.168:3001/session", {
@@ -49,17 +54,22 @@ function Report(props) {
       .catch((error) => {
         console.error(error);
       });
-    getReport();
+    getReport(page);
   }, []);
-  const getReport = async () => {
+  const getReport = async (page) => {
+    //console.log(page);
     //목록 가져오기
     await axios
       .get("http://10.10.10.168:3001/report", {
         withCredentials: true,
+        params: {
+          page: page,
+        },
       })
       .then((response) => {
         //console.log(response.data);
-        setRows(response.data);
+        setRowCount(response.data.count);
+        setRows(response.data.rows);
       })
       .catch((error) => {
         console.error(error);
@@ -72,7 +82,14 @@ function Report(props) {
       headerAlign: "center",
       headerClassName: "th",
       cellClassName: "MuiDataGrid-cell--textCenter",
-      //   width: 100,
+      hide: true,
+    },
+    {
+      field: "report_num",
+      headerName: "번호",
+      headerAlign: "center",
+      headerClassName: "th",
+      cellClassName: "MuiDataGrid-cell--textCenter",
       flex: 1,
     },
     {
@@ -81,7 +98,6 @@ function Report(props) {
       headerAlign: "center",
       headerClassName: "th",
       cellClassName: "MuiDataGrid-cell--textCenter",
-      //   width: 100,
       flex: 2,
     },
     {
@@ -90,7 +106,6 @@ function Report(props) {
       headerAlign: "center",
       headerClassName: "th",
       cellClassName: "MuiDataGrid-cell--textCenter",
-      //   width: 200,
       flex: 2,
     },
     {
@@ -99,7 +114,6 @@ function Report(props) {
       headerAlign: "center",
       headerClassName: "th",
       cellClassName: "MuiDataGrid-cell--textCenter",
-      //   width: 538,
       flex: 4,
     },
     {
@@ -108,7 +122,6 @@ function Report(props) {
       headerAlign: "center",
       headerClassName: "th",
       cellClassName: "MuiDataGrid-cell--textCenter",
-      //   width: 200,
       flex: 2,
     },
   ];
@@ -129,6 +142,12 @@ function Report(props) {
       />
     );
   }
+  const nav = useNavigate();
+  const rowClick = (e) => {
+    console.log(e);
+
+    nav("/report-details" + e.row.report_id);
+  };
   return (
     <div style={{ background: "white" }}>
       <Header
@@ -142,7 +161,7 @@ function Report(props) {
         }}
         {...rest}
       />
-      <Parallax image={require("assets/img/bg.jpg")} style={{ height: "30vh" }}>
+      <Parallax image={require("assets/img/bg.jpg")} style={{ height: "40vh" }}>
         <div className={classes.container}>
           <GridContainer>
             <GridItem>
@@ -156,8 +175,14 @@ function Report(props) {
       </Parallax>
       <div className={classNames(classes.main, classes.mainRaised)}>
         <div className={classes.container} style={{ padding: "70px 0" }}>
-          <Typography />
-          <div style={{ height: 750, width: "100%" }}>
+          <Success
+            children={
+              <h3>
+                <SpaIcon /> &nbsp; 발견제보
+              </h3>
+            }
+          />
+          <div style={{ height: 650, width: "100%" }}>
             <DataGrid
               sx={{
                 "& .th": {
@@ -167,8 +192,16 @@ function Report(props) {
               rows={rows}
               getRowId={(row) => row.report_id}
               columns={columns}
-              pageSize={12}
-              rowsPerPageOptions={[12]}
+              pageSize={10}
+              rowCount={rowCount}
+              paginationMode="server"
+              rowsPerPageOptions={[10]}
+              onPageChange={(newPage) => {
+                //console.log(newPage);
+                setPage(newPage);
+                getReport(newPage);
+              }}
+              onCellDoubleClick={rowClick}
               disableColumnMenu // 컬럼 메뉴 비활성화
               components={{ Pagination: CustomPagination }}
               headerHeight={50} // th 크기

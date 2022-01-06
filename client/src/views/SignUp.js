@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { forwardRef, useEffect, useState } from "react";
 import axios from "axios";
 // @material-ui/core components
 import { makeStyles } from "@material-ui/core/styles";
@@ -7,6 +7,7 @@ import InputAdornment from "@material-ui/core/InputAdornment";
 // @material-ui/icons
 import KeyIcon from "@mui/icons-material/Key";
 import People from "@material-ui/icons/People";
+import PhoneEnabledIcon from "@mui/icons-material/PhoneEnabled";
 
 import TextField from "@mui/material/TextField";
 import LockIcon from "@mui/icons-material/Lock";
@@ -38,10 +39,33 @@ import {
 // import Slide from "@material-ui/core/Slide";
 
 import Close from "@material-ui/icons/Close";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+
+import { IMaskInput } from "react-imask";
+import PropTypes from "prop-types";
 
 const useStyles = makeStyles(styles);
 const modalStyle = makeStyles(modalStyles);
+
+const phoneMask = forwardRef(function phoneMask(props, ref) {
+  const { onChange, ...other } = props;
+  return (
+    <IMaskInput
+      {...other}
+      mask="000-0000-0000"
+      definitions={{
+        "#": /[0-9]/,
+      }}
+      inputRef={ref}
+      onAccept={(value) => onChange({ target: { name: props.name, value } })}
+      overwrite
+    />
+  );
+});
+phoneMask.propTypes = {
+  name: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+};
 
 export default function SignUp(props) {
   const [cardAnimaton, setCardAnimation] = React.useState("cardHidden");
@@ -49,6 +73,7 @@ export default function SignUp(props) {
     setCardAnimation("");
   }, 700);
 
+  const nav = useNavigate();
   useEffect(async () => {
     await axios
       .get("http://10.10.10.168:3001/session", {
@@ -59,7 +84,7 @@ export default function SignUp(props) {
       })
       .then((response) => {
         if (response.data !== "") {
-          window.location.href = "/";
+          nav("/");
         }
       })
       .catch((error) => {
@@ -104,7 +129,7 @@ export default function SignUp(props) {
     if (id && boolean && value) {
       return true;
     } else {
-      console.log(id, boolean, value);
+      //console.log(id, boolean, value);
       return false;
     }
   };
@@ -112,7 +137,7 @@ export default function SignUp(props) {
   // input onChange
   const onChange = (e) => {
     const { id, value } = e.target;
-
+    console.log(id);
     let name = validation(id === "name", nameError, value);
     let userId = validation(id === "userId", userIdError, value);
     let phone = validation(id === "phone", phoneError, value);
@@ -274,14 +299,16 @@ export default function SignUp(props) {
                       variant="standard"
                       label="Phone..."
                       id="phone"
+                      name="phone"
                       error={phoneError}
+                      value={phone}
+                      //onChange={onChange}
                       InputProps={{
                         type: "text",
-                        onChange: (e) => onChange(e),
-                        value: phone,
+                        inputComponent: phoneMask,
                         endAdornment: (
                           <InputAdornment position="end">
-                            <LockIcon />
+                            <PhoneEnabledIcon />
                           </InputAdornment>
                         ),
                         autoComplete: "off",
