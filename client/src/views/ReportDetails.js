@@ -57,6 +57,7 @@ const useStyles = makeStyles(styles);
 function ReportDetail(props) {
   const classes = useStyles();
   const { ...rest } = props;
+  const { id } = useParams(); // 게시글 아이디
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userObj, setUserObj] = useState({});
@@ -68,10 +69,62 @@ function ReportDetail(props) {
     foundLocation: "",
     content: "",
   });
-  const [imgurl, setImgurl] = useState("");
-  const { id } = useParams();
 
-  const getReport = async () => {
+  //const [writerId, setWriterId] = useState("");
+  const [btnHide, setBtnHide] = useState(true);
+
+  const [imgurl, setImgurl] = useState(null);
+
+  const [readOnly, setReadOnly] = useState(true);
+
+  const [file, setFile] = useState({
+    file: "",
+    filename: "",
+  }); //파일
+
+  const [beforeFileName, setBeforeFileName] = useState(""); // 파일 수정했는지 확인용도
+  const [writerId, setWriterId] = useState(null); // 제보글이 비로그인으로 작성된 글인지 확인용도
+
+  const [passInput, setPassInput] = useState(false); // 비밀번호
+  const [password, setPassword] = useState(null); // 비밀번호
+
+  // 수정또는 삭제를 눌렀을때
+  const isReportLoggedIn = (boolean, func) => {
+    if (writerId) {
+      // 가입한사람이 쓴 제보글일때는 그냥 실행
+      func(boolean);
+    } else {
+      setPassInput(true); // 아닐 시 비밀번호 체크
+    }
+  };
+  // 비밀번호 체크
+  const passwordCheck = (what) => {
+    if (password == document.getElementById("password").value) {
+      setPassInput(false, setReadOnly(false));
+    } else {
+      alert("비밀번호가 맞지 않습니다.");
+      setPassInput(false);
+    }
+  };
+
+  const fileChange = (event) => {
+    const value = event.target.value;
+    const extension = value.split(".").pop().toLowerCase();
+    if (extension === "png" || extension === "jpg" || extension === "jpeg") {
+      setFile({
+        file: value,
+        filename: value.substring(12),
+      });
+    } else {
+      alert("사진을 넣어주세요");
+    }
+  };
+
+  const resetFile = () => {
+    // 파일 지우기
+    setFile({ file: "", filename: "" });
+  };
+  const getReport = async (isLoggedIn, userObj) => {
     await axios
       .get("http://10.10.10.168:3001/reportdetail", {
         params: {
@@ -83,6 +136,14 @@ function ReportDetail(props) {
         console.log(response.data);
         var data = response.data;
         if (data.report_writer_id) {
+          setWriterId(data.report_writer_id);
+          // 글의 작성자아이디와 로그인한사람의 userId 가 같으면
+          if (isLoggedIn && data.report_writer_id === userObj.user_id) {
+            setBtnHide(false);
+          } else {
+            setBtnHide(true);
+          }
+          // 가져온 데이터로 세팅
           setValues({
             name: data.user_name,
             phone: data.user_phone,
@@ -90,6 +151,8 @@ function ReportDetail(props) {
             content: data.report_content,
           });
         } else {
+          setBtnHide(false);
+          setPassword(data.report_password);
           setValues({
             name: data.report_name,
             phone: data.report_writer_phone,
@@ -99,6 +162,14 @@ function ReportDetail(props) {
         }
         setFoundDate(new Date(data.report_date_discovery));
         if (data.report_img) {
+          var filename = data.report_img.substring(
+            data.report_img.indexOf("_") + 1
+          );
+          setBeforeFileName(filename);
+          setFile({
+            file: "",
+            filename: filename,
+          });
           setImgurl(data.imgurl);
         }
       });
@@ -110,18 +181,18 @@ function ReportDetail(props) {
         withCredentials: true,
       })
       .then((response) => {
-        //console.log(response.data);
         if (response.data) {
           setIsLoggedIn(true);
           setUserObj(response.data);
+          getReport(true, response.data);
         } else {
           setIsLoggedIn(false);
+          getReport(false, null);
         }
       })
       .catch((error) => {
         console.error(error);
       });
-    getReport();
   }, []);
 
   const handleChange = (event) => {
@@ -131,25 +202,8 @@ function ReportDetail(props) {
     });
   };
 
-  const [file, setFile] = useState(""); //파일
-
-  const fileChange = (event) => {
-    const value = event.target.value;
-    const extension = value.split(".").pop().toLowerCase();
-    if (extension === "png" || extension === "jpg" || extension === "jpeg") {
-      setFile(value);
-    } else {
-      alert("사진을 넣어주세요");
-    }
-  };
-  const resetFile = () => {
-    // 파일 지우기
-    setFile("");
-  };
-
   const nav = useNavigate();
-
-  const report = async (e) => {
+  const updateReport = async (e) => {
     e.preventDefault();
     if (!isLoggedIn) {
       if (values.name.trim() === "") {
@@ -169,9 +223,23 @@ function ReportDetail(props) {
     }
     // console.log();
     const formData = new FormData(document.getElementsByName("reportForm")[0]); // form data 다넣기 multipart/form-data form 임
-    //formData.append("uploadedFile", file);
+    if (file.file !== "" || beforeFileName !== file.filename) {
+      // 첨부파일을 수정함
+      formData.append("fileModify", true);
+    } else {
+      formData.append("fileModify", false);
+    }
+
+    // for (var key of formData.keys()) {
+    //   console.log(key);
+    // }
+
+    // for (var value of formData.values()) {
+    //   console.log(value);
+    // }
+
     await axios
-      .post("http://10.10.10.168:3001/report", formData, {
+      .put("http://10.10.10.168:3001/report", formData, {
         withCredentials: true,
       })
       .then((response) => {
@@ -221,43 +289,82 @@ function ReportDetail(props) {
           <form
             name="reportForm"
             encType="multipart/form-data"
-            // action="http://10.10.10.168:3001/report"
-            // method="post"
-            onSubmit={report}
+            onSubmit={updateReport}
           >
-            <div>
-              <h3 style={{ fontWeight: "bold" }}>인적사항</h3>
-              <br></br>
-              <Grid container spacing={2}>
-                <Grid item xs={1}>
-                  <h5 style={{ textAlign: "center" }}>발견자</h5>
+            <input type={"hidden"} value={id} name="id" />
+            {readOnly ? (
+              <div>
+                <h3 style={{ fontWeight: "bold" }}>인적사항</h3>
+                <br></br>
+                <Grid container spacing={2}>
+                  <Grid item xs={1}>
+                    <h5 style={{ textAlign: "center" }}>발견자</h5>
+                  </Grid>
+                  <Grid item xs={5}>
+                    <OutlinedInput
+                      readOnly={readOnly}
+                      fullWidth
+                      name="name"
+                      value={values.name}
+                      onChange={handleChange}
+                    />
+                  </Grid>
+                  {/* <Grid item xs={1}>
+                    <h5 style={{ textAlign: "center" }}>연락처</h5>
+                  </Grid>
+                  <Grid item xs={5}>
+                    <OutlinedInput
+                      readOnly={readOnly}
+                      fullWidth
+                      variant="outlined"
+                      name="phone"
+                      inputComponent={phoneMask}
+                      value={values.phone}
+                      onChange={handleChange}
+                      inputProps={{ maxLength: 13 }}
+                    />
+                  </Grid> */}
                 </Grid>
-                <Grid item xs={5}>
-                  <OutlinedInput
-                    readOnly
-                    fullWidth
-                    name="name"
-                    value={values.name}
-                    onChange={handleChange}
-                  />
-                </Grid>
-                <Grid item xs={1}>
-                  <h5 style={{ textAlign: "center" }}>연락처</h5>
-                </Grid>
-                <Grid item xs={5}>
-                  <OutlinedInput
-                    readOnly
-                    fullWidth
-                    variant="outlined"
-                    name="phone"
-                    inputComponent={phoneMask}
-                    value={values.phone}
-                    onChange={handleChange}
-                    inputProps={{ maxLength: 13 }}
-                  />
-                </Grid>
-              </Grid>
-            </div>
+              </div>
+            ) : (
+              <div>
+                {writerId ? null : ( // 비로그인 인지 아닌지
+                  <>
+                    <h3 style={{ fontWeight: "bold" }}>인적사항</h3>
+                    <br></br>
+                    <Grid container spacing={2}>
+                      <Grid item xs={1}>
+                        <h5 style={{ textAlign: "center" }}>발견자</h5>
+                      </Grid>
+                      <Grid item xs={5}>
+                        <OutlinedInput
+                          readOnly={readOnly}
+                          fullWidth
+                          name="name"
+                          value={values.name}
+                          onChange={handleChange}
+                        />
+                      </Grid>
+                      <Grid item xs={1}>
+                        <h5 style={{ textAlign: "center" }}>연락처</h5>
+                      </Grid>
+                      <Grid item xs={5}>
+                        <OutlinedInput
+                          readOnly={readOnly}
+                          fullWidth
+                          variant="outlined"
+                          name="phone"
+                          inputComponent={phoneMask}
+                          value={values.phone}
+                          onChange={handleChange}
+                          inputProps={{ maxLength: 13 }}
+                        />
+                      </Grid>
+                    </Grid>
+                  </>
+                )}
+              </div>
+            )}
 
             <div>
               <h3 style={{ fontWeight: "bold" }}>발견정보</h3>
@@ -269,7 +376,7 @@ function ReportDetail(props) {
                 <Grid item xs={5}>
                   <LocalizationProvider dateAdapter={AdapterDateFns}>
                     <DesktopDatePicker
-                      readOnly
+                      readOnly={readOnly}
                       value={foundDate}
                       inputFormat={"yyyy-MM-dd"}
                       mask={"____-__-__"}
@@ -290,7 +397,7 @@ function ReportDetail(props) {
                 </Grid>
                 <Grid item xs={5}>
                   <OutlinedInput
-                    readOnly
+                    readOnly={readOnly}
                     fullWidth
                     helpertext="Incorrect entry."
                     name="foundLocation"
@@ -304,7 +411,7 @@ function ReportDetail(props) {
                 </Grid>
                 <Grid item xs={11}>
                   <OutlinedInput
-                    readOnly
+                    readOnly={readOnly}
                     fullWidth
                     name="content"
                     value={values.content}
@@ -313,60 +420,129 @@ function ReportDetail(props) {
                     rows={15}
                   />
                 </Grid>
-                <Grid item xs={1}>
-                  <h5 style={{ textAlign: "center" }}>첨부파일</h5>
-                </Grid>
-                <Grid item xs={11}>
-                  <img src={imgurl} width={"100%"} />
-                </Grid>
+                {passInput ? (
+                  <>
+                    <Grid item xs={1}>
+                      <h5 style={{ textAlign: "center" }}>비밀번호</h5>
+                    </Grid>
+                    <Grid item xs={5}>
+                      <OutlinedInput fullWidth id="password" />
+                    </Grid>
+                    <Grid item xs={2}>
+                      <Button
+                        color="info"
+                        style={{ width: "100%" }}
+                        onClick={passwordCheck}
+                      >
+                        확인
+                      </Button>
+                    </Grid>
+                    <Grid item xs={2}>
+                      <Button
+                        color="danger"
+                        style={{ width: "100%" }}
+                        onClick={() => setPassInput(false)}
+                      >
+                        취소
+                      </Button>
+                    </Grid>
+                  </>
+                ) : (
+                  <>
+                    {readOnly ? (
+                      <>
+                        <Grid item xs={1}>
+                          <h5 style={{ textAlign: "center" }}>첨부파일</h5>
+                        </Grid>
+                        <Grid item xs={11}>
+                          <img src={imgurl} width={"100%"} height={"100%"} />
+                        </Grid>
+                        {btnHide ? null : (
+                          <>
+                            <Grid item xs={8}></Grid>
+                            <Grid item xs={2}>
+                              <Button
+                                color="info"
+                                onClick={() =>
+                                  isReportLoggedIn(false, setReadOnly)
+                                }
+                                style={{ width: "100%" }}
+                              >
+                                수정하기
+                              </Button>
+                            </Grid>
+                            <Grid item xs={2}>
+                              <Button color="danger" style={{ width: "100%" }}>
+                                삭제하기
+                              </Button>
+                            </Grid>
+                          </>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <Grid item xs={1}>
+                          <h5 style={{ textAlign: "center" }}> 첨부파일</h5>
 
-                {/* <Grid item xs={1}>
-                  <h5 style={{ textAlign: "center" }}> 첨부파일</h5>
+                          <input
+                            type="file"
+                            hidden
+                            value={file.file}
+                            id="uploadedFile"
+                            name="uploadedFile"
+                            onChange={fileChange}
+                          />
+                        </Grid>
+                        <Grid item xs={5}>
+                          <OutlinedInput
+                            fullWidth
+                            onFocus={(e) => {
+                              document.getElementById("uploadedFile").click();
+                              e.target.blur();
+                            }}
+                            value={file.filename}
+                            inputprops={{
+                              readOnly: true,
+                            }}
+                          />
+                        </Grid>
+                        <Grid item xs={1}>
+                          <Button
+                            color="danger"
+                            style={{ width: "100%" }}
+                            onClick={resetFile}
+                          >
+                            취소
+                          </Button>
+                        </Grid>
 
-                  <input
-                    type="file"
-                    hidden
-                    value={file}
-                    id="uploadedFile"
-                    name="uploadedFile"
-                    onChange={fileChange}
-                  />
-                </Grid>
-                <Grid item xs={5}>
-                  <OutlinedInput
-                    fullWidth
-                    onFocus={(e) => {
-                      document.getElementById("uploadedFile").click();
-                      e.target.blur();
-                    }}
-                    value={file.substring(12)}
-                    inputprops={{
-                      readOnly: true,
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={1}>
-                  <Button
-                    color="danger"
-                    style={{ width: "100%" }}
-                    onClick={resetFile}
-                  >
-                    취소
-                  </Button>
-                </Grid> */}
-                {/*}
-                <Grid item xs={5}></Grid>
-                <Grid item xs={10}></Grid>
+                        <Grid item xs={5}></Grid>
+                        <Grid item xs={8}></Grid>
 
-                <Grid item xs={2}>
-                  <Button
-                    color="success"
-                    style={{ width: "100%" }}
-                    type="submit"
-                  >
-                    제보하기
-                  </Button>
-                </Grid> */}
+                        <Grid item xs={2}>
+                          <Button
+                            color="success"
+                            style={{ width: "100%" }}
+                            type="submit"
+                          >
+                            저장
+                          </Button>
+                        </Grid>
+
+                        <Grid item xs={2}>
+                          <Button
+                            color="danger"
+                            onClick={() => setReadOnly(true)}
+                            style={{ width: "100%" }}
+                          >
+                            취소
+                          </Button>
+                        </Grid>
+                      </>
+                    )}
+                  </>
+                )}
+                {/* ---------------------첨부파일------------------- */}
               </Grid>
             </div>
           </form>

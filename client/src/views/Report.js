@@ -110,7 +110,7 @@ function Report(props) {
     },
     {
       field: "report_title",
-      headerName: "제목",
+      headerName: "위치",
       headerAlign: "center",
       headerClassName: "th",
       cellClassName: "MuiDataGrid-cell--textCenter",

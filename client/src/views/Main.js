@@ -78,7 +78,7 @@ function Main(props) {
         <div className={classes.container}>
           <Carousel />
           <ProductSection />
-          <TeamSection />
+          {/* <TeamSection /> */}
         </div>
       </div>
       <Footer />

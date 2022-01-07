@@ -15,7 +15,10 @@ module.exports = function (app) {
 
   app.post("/report", upload.single("uploadedFile"), report.insertReport);
   app.get("/reportdetail", report.getReportDetail);
+
+  app.put("/report", upload.single("uploadedFile"), report.updateReport);
 };
+
 // var multipartMiddleware = multipart();
 // var storage = multer.diskStorage({
 //   destination: (req, file, callback) => {
