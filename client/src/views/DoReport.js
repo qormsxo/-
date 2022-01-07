@@ -317,6 +317,16 @@ function DoReport(props) {
                     취소
                   </Button>
                 </Grid>
+                {isLoggedIn ? null : (
+                  <>
+                    <Grid item xs={1}>
+                      <h5 style={{ textAlign: "center" }}> 비밀번호</h5>
+                    </Grid>
+                    <Grid item xs={4}>
+                      <OutlinedInput fullWidth type="password" />
+                    </Grid>
+                  </>
+                )}
 
                 <Grid item xs={10}></Grid>
 

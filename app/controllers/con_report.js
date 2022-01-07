@@ -1,6 +1,5 @@
 var crud = require("../model/crud");
 var path = require("path");
-const { Console } = require("console");
 exports.getReport = (req, res) => {
   let offset = req.query.page * 10;
   let limit = 10; // 일단 10개로 고정
