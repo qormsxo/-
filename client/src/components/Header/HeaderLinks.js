@@ -34,7 +34,7 @@ export default function HeaderLinks(props) {
         withCredentials: true,
       })
       .then((response) => {
-        nav("/");
+        window.location.href = "/";
       })
       .catch((error) => {
         console.error(error);
@@ -119,7 +119,7 @@ export default function HeaderLinks(props) {
                 target="_blank"
                 className={classes.navLink}
               >
-                <h6 style={{ marginTop: "5px" }}>Sign Up</h6>
+                <h6 style={{ marginTop: "5px" }}>회원가입</h6>
               </Button>
             </Link>
           </ListItem>
@@ -131,7 +131,7 @@ export default function HeaderLinks(props) {
                 target="_blank"
                 className={classes.navLink}
               >
-                <h6 style={{ marginTop: "5px" }}>Log In</h6>
+                <h6 style={{ marginTop: "5px" }}>로그인</h6>
               </Button>
             </Link>
           </ListItem>

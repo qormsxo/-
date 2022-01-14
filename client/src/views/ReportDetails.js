@@ -21,7 +21,7 @@ import Button from "components/CustomButtons/Button.js";
 import styles from "assets/jss/material-kit-react/views/components.js";
 // import { PaginationItem } from "@mui/material";
 import Info from "components/Typography/Info";
-import { AddComment } from "@material-ui/icons";
+import { AddComment, Close } from "@material-ui/icons";
 import { OutlinedInput, TextField } from "@material-ui/core";
 
 import LocalizationProvider from "@mui/lab/LocalizationProvider";
@@ -29,6 +29,18 @@ import AdapterDateFns from "@mui/lab/AdapterDateFns";
 import DesktopDatePicker from "@mui/lab/DesktopDatePicker";
 
 import { useNavigate, useParams } from "react-router-dom";
+
+import Kakaomap from "./Map";
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+} from "@material-ui/core";
+import modalStyles from "assets/jss/material-kit-react/modalStyle";
+const useStyles = makeStyles(styles);
+const modalStyle = makeStyles(modalStyles);
 
 const phoneMask = React.forwardRef(function phoneMask(props, ref) {
   const { onChange, ...other } = props;
@@ -52,17 +64,50 @@ phoneMask.propTypes = {
   onChange: PropTypes.func.isRequired,
 };
 
-const useStyles = makeStyles(styles);
-
 function ReportDetail(props) {
   const classes = useStyles();
+  const modalClasses = modalStyle();
   const { ...rest } = props;
   const { id } = useParams(); // 게시글 아이디
-
+  const [classicModal, setClassicModal] = useState(false); // 모달
+  const [deleteModal, setDeleteModal] = useState(false); // 모달
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userObj, setUserObj] = useState({});
   const [foundDate, setFoundDate] = useState(null);
 
+  // 지도 관련
+  const [searchKeyword, setSearchKeyword] = useState(""); // 지도 검색 인풋
+  const keywordChange = (event) => {
+    setSearchKeyword(event.target.value);
+  };
+
+  const [Place, setPlace] = useState(""); //
+  const search = () => {
+    // 검색
+    //console.log(Place);
+    setPlace(searchKeyword);
+  };
+  // 위도 경도
+  const [coordinates, setCoordinates] = useState({
+    lat: "",
+    lng: "",
+  });
+
+  const [address, setAddress] = useState(""); //검색된 주소
+
+  const setMarkers = (markers) => {
+    //console.log(markers);
+    if (markers.content) {
+      setAddress(markers.content);
+    } else {
+      setAddress(markers.address);
+    }
+    setCoordinates(markers.position);
+  };
+
+  //////////////////////////////////////////////
+
+  //value
   const [values, setValues] = useState({
     name: "",
     phone: "",
@@ -71,11 +116,13 @@ function ReportDetail(props) {
   });
 
   //const [writerId, setWriterId] = useState("");
-  const [btnHide, setBtnHide] = useState(true);
+  const [btnHide, setBtnHide] = useState(true); // 수정삭제 버튼 하이드 true false
 
-  const [imgurl, setImgurl] = useState(null);
+  const [imgurl, setImgurl] = useState(null); // 제보 이미지 url
 
-  const [readOnly, setReadOnly] = useState(true);
+  const [readOnly, setReadOnly] = useState(true); // readonly true false
+
+  const [mode, setMode] = useState(""); // 비로그인 회원글의 수정, 삭제 구분
 
   const [file, setFile] = useState({
     file: "",
@@ -86,7 +133,7 @@ function ReportDetail(props) {
   const [writerId, setWriterId] = useState(null); // 제보글이 비로그인으로 작성된 글인지 확인용도
 
   const [passInput, setPassInput] = useState(false); // 비밀번호
-  const [password, setPassword] = useState(null); // 비밀번호
+  const [password, setPassword] = useState(""); // 비밀번호
 
   // 수정또는 삭제를 눌렀을때
   const isReportLoggedIn = (boolean, func) => {
@@ -98,9 +145,16 @@ function ReportDetail(props) {
     }
   };
   // 비밀번호 체크
-  const passwordCheck = (what) => {
+  const passwordCheck = () => {
     if (password == document.getElementById("password").value) {
-      setPassInput(false, setReadOnly(false));
+      if (mode === "modify") {
+        setPassInput(false, setReadOnly(false));
+      } else if (mode === "delete") {
+        deleteReport();
+      } else {
+        alert("에러");
+        setPassInput(false);
+      }
     } else {
       alert("비밀번호가 맞지 않습니다.");
       setPassInput(false);
@@ -160,17 +214,29 @@ function ReportDetail(props) {
             content: data.report_content,
           });
         }
-        setFoundDate(new Date(data.report_date_discovery));
+
+        setFoundDate(new Date(data.report_date_discovery)); //발견날짜 세팅
+        // 이미지url 이 있으면 세팅
         if (data.report_img) {
           var filename = data.report_img.substring(
             data.report_img.indexOf("_") + 1
           );
+          //console.log("?????");
           setBeforeFileName(filename);
           setFile({
             file: "",
             filename: filename,
           });
           setImgurl(data.imgurl);
+        }
+        // 위도 경도 정보가 있으면 세팅
+        if (data.report_location) {
+          //console.log(data.report_location);
+          let temp = data.report_location.split(",");
+          temp = { lat: Number(temp[0]), lng: Number(temp[1]) };
+
+          setCoordinates(temp);
+          setAddress(data.report_title);
         }
       });
   };
@@ -213,7 +279,7 @@ function ReportDetail(props) {
       }
     }
     let foundDateFormat = dayjs(foundDate).format("YYYY-MM-DD");
-    console.log(foundDateFormat);
+    //console.log(foundDateFormat);
     if (
       foundDateFormat.trim() === "" &&
       values.foundLocation.trim() === "" &&
@@ -223,26 +289,52 @@ function ReportDetail(props) {
     }
     // console.log();
     const formData = new FormData(document.getElementsByName("reportForm")[0]); // form data 다넣기 multipart/form-data form 임
-    if (file.file !== "" || beforeFileName !== file.filename) {
-      // 첨부파일을 수정함
+    if (beforeFileName !== "" && beforeFileName !== file.filename) {
+      // 있던 첨부 파일을 첨부파일을 수정함
+      //console.log(beforeFileName, file.file , )
+      formData.append("fileModify", true);
+      formData.append("beforeImgName", imgurl.split("uploads/")[1]);
+    } else if (file.file !== "" && beforeFileName == "") {
+      // 없다가 생김
       formData.append("fileModify", true);
     } else {
       formData.append("fileModify", false);
     }
 
-    // for (var key of formData.keys()) {
-    //   console.log(key);
-    // }
-
-    // for (var value of formData.values()) {
-    //   console.log(value);
-    // }
+    if (coordinates.lat !== "" && coordinates.lng !== "") {
+      // 위도경도 추가
+      formData.append("coordinates", [coordinates.lat, coordinates.lng]);
+    }
 
     await axios
       .put("http://10.10.10.168:3001/report", formData, {
         withCredentials: true,
       })
       .then((response) => {
+        alert("수정되었습니다.");
+        nav("/report");
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  };
+
+  const deleteReport = async () => {
+    console.log(imgurl);
+    await axios
+      .delete(
+        "http://10.10.10.168:3001/report",
+
+        {
+          data: {
+            id: id,
+            filename: imgurl ? imgurl.split("uploads/")[1] : null,
+          },
+          withCredentials: true,
+        }
+      )
+      .then((response) => {
+        alert("삭제되었습니다.");
         nav("/report");
       })
       .catch((error) => {
@@ -395,15 +487,24 @@ function ReportDetail(props) {
                 <Grid item xs={1}>
                   <h5 style={{ textAlign: "center" }}>발견장소</h5>
                 </Grid>
-                <Grid item xs={5}>
+                <Grid item xs={4}>
                   <OutlinedInput
                     readOnly={readOnly}
                     fullWidth
-                    helpertext="Incorrect entry."
                     name="foundLocation"
                     value={values.foundLocation}
                     onChange={handleChange}
                   />
+                </Grid>
+                <Grid item xs={1}>
+                  <Button
+                    disabled={readOnly}
+                    color="info"
+                    style={{ width: "100%" }}
+                    onClick={() => setClassicModal(true)}
+                  >
+                    검색
+                  </Button>
                 </Grid>
                 {/* <Grid item xs={2}></Grid> */}
                 <Grid item xs={1}>
@@ -417,7 +518,7 @@ function ReportDetail(props) {
                     value={values.content}
                     onChange={handleChange}
                     multiline
-                    rows={15}
+                    rows={8}
                   />
                 </Grid>
                 {passInput ? (
@@ -426,7 +527,12 @@ function ReportDetail(props) {
                       <h5 style={{ textAlign: "center" }}>비밀번호</h5>
                     </Grid>
                     <Grid item xs={5}>
-                      <OutlinedInput fullWidth id="password" />
+                      <OutlinedInput
+                        fullWidth
+                        id="password"
+                        type="password"
+                        autoComplete="off"
+                      />
                     </Grid>
                     <Grid item xs={2}>
                       <Button
@@ -464,7 +570,11 @@ function ReportDetail(props) {
                               <Button
                                 color="info"
                                 onClick={() =>
-                                  isReportLoggedIn(false, setReadOnly)
+                                  isReportLoggedIn(
+                                    false,
+                                    setReadOnly,
+                                    setMode("modify")
+                                  )
                                 }
                                 style={{ width: "100%" }}
                               >
@@ -472,7 +582,13 @@ function ReportDetail(props) {
                               </Button>
                             </Grid>
                             <Grid item xs={2}>
-                              <Button color="danger" style={{ width: "100%" }}>
+                              <Button
+                                color="danger"
+                                style={{ width: "100%" }}
+                                onClick={() => {
+                                  setDeleteModal(true);
+                                }}
+                              >
                                 삭제하기
                               </Button>
                             </Grid>
@@ -550,6 +666,146 @@ function ReportDetail(props) {
 
         <Footer />
       </div>
+      {/* ##########################지도############################ */}
+      <Dialog
+        classes={{
+          root: classes.center,
+          paper: modalClasses.modal,
+        }}
+        maxWidth="lg"
+        fullWidth={true}
+        open={classicModal}
+        // TransitionComponent={Transition}
+        keepMounted
+        //onClose={() => setClassicModal(false)}
+        aria-labelledby="classic-modal-slide-title"
+        aria-describedby="classic-modal-slide-description"
+      >
+        <DialogTitle
+          id="classic-modal-slide-title"
+          disableTypography
+          className={modalClasses.modalHeader}
+        >
+          <IconButton
+            className={modalClasses.modalCloseButton}
+            key="close"
+            aria-label="Close"
+            color="inherit"
+            onClick={() => setClassicModal(false)}
+          >
+            <Close className={modalClasses.modalClose} />
+          </IconButton>
+          <h3 className={modalClasses.modalTitle}>지도 검색</h3>
+        </DialogTitle>
+        <DialogContent
+          id="classic-modal-slide-description"
+          className={modalClasses.modalBody}
+        >
+          {/* -------------------------------------------- */}
+          <div>
+            <OutlinedInput
+              style={{ width: "30%" }}
+              name="keyword"
+              onChange={keywordChange}
+              value={searchKeyword || ""}
+            />
+
+            <Button onClick={search}>검색</Button>
+            <OutlinedInput
+              fullWidth
+              name="location"
+              readOnly
+              value={address || ""}
+            />
+          </div>
+          {/* -------------------------------------------- */}
+          <Kakaomap
+            searchPlace={Place}
+            func={setMarkers}
+            position={coordinates.lat ? coordinates : null}
+          />
+        </DialogContent>
+        <DialogActions className={modalClasses.modalFooter}>
+          <Button
+            color="info"
+            onClick={() => {
+              setValues({
+                ...values,
+                ["foundLocation"]: address,
+              });
+              setClassicModal(false);
+              setAddress("");
+              setSearchKeyword("");
+            }}
+          >
+            확인
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ##########################삭제 모달############################ */}
+      <Dialog
+        classes={{
+          root: classes.center,
+          paper: modalClasses.modal,
+        }}
+        maxWidth="sm"
+        fullWidth={true}
+        open={deleteModal}
+        // TransitionComponent={Transition}
+        keepMounted
+        //onClose={() => setClassicModal(false)}
+        aria-labelledby="classic-modal-slide-title"
+        aria-describedby="classic-modal-slide-description"
+      >
+        <DialogTitle
+          id="classic-modal-slide-title"
+          disableTypography
+          className={modalClasses.modalHeader}
+        >
+          <IconButton
+            className={modalClasses.modalCloseButton}
+            key="close"
+            aria-label="Close"
+            color="inherit"
+            onClick={() => setDeleteModal(false)}
+          >
+            <Close className={modalClasses.modalClose} />
+          </IconButton>
+          <h3 className={modalClasses.modalTitle}>제보삭제</h3>
+        </DialogTitle>
+        <DialogContent
+          id="classic-modal-slide-description"
+          className={modalClasses.modalBody}
+        >
+          {/* -------------------------------------------- */}
+          <p>정말 삭제하시겠습니까?</p>
+          {/* -------------------------------------------- */}
+        </DialogContent>
+        <DialogActions className={modalClasses.modalFooter}>
+          <Button
+            color="info"
+            onClick={() => {
+              if (writerId) {
+                deleteReport();
+              } else {
+                isReportLoggedIn(false, setReadOnly, setMode("delete"));
+                setDeleteModal(false);
+              }
+            }}
+          >
+            확인
+          </Button>
+          <Button
+            color="danger"
+            onClick={() => {
+              setDeleteModal(false);
+            }}
+          >
+            취소
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }

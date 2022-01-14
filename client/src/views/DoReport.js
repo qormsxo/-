@@ -1,43 +1,38 @@
-// nodejs library that concatenates classes
+/* global kakao */
 import React, { useEffect, useState } from "react";
 import classNames from "classnames";
 import axios from "axios";
-// import { Link } from "react-router-dom";
 import { IMaskInput } from "react-imask";
 import PropTypes from "prop-types";
 import dayjs from "dayjs";
 import { makeStyles } from "@material-ui/core/styles";
-
 import Header from "components/Header/Header.js";
 import GridContainer from "components/Grid/GridContainer.js";
 import GridItem from "components/Grid/GridItem.js";
-// import Button from "components/CustomButtons/Button.js";
 import Parallax from "components/Parallax/Parallax.js";
 import HeaderLinks from "components/Header/HeaderLinks.js";
-// import Pagination from "@mui/material/Pagination";
 import Footer from "components/Footer/Footer";
 import Grid from "@mui/material/Grid";
 import Button from "components/CustomButtons/Button.js";
-
 import styles from "assets/jss/material-kit-react/views/components.js";
-// import { PaginationItem } from "@mui/material";
 import Info from "components/Typography/Info";
-import { AddComment } from "@material-ui/icons";
-import {
-  Box,
-  FormControl,
-  Input,
-  // InputAdornment,
-  InputLabel,
-  OutlinedInput,
-  TextField,
-} from "@material-ui/core";
-
+import { AddComment, Close } from "@material-ui/icons";
+import { OutlinedInput, TextField } from "@material-ui/core";
 import LocalizationProvider from "@mui/lab/LocalizationProvider";
 import AdapterDateFns from "@mui/lab/AdapterDateFns";
 import DesktopDatePicker from "@mui/lab/DesktopDatePicker";
-
 import { useNavigate } from "react-router-dom";
+import Kakaomap from "./Map";
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+} from "@material-ui/core";
+import modalStyles from "assets/jss/material-kit-react/modalStyle";
+const useStyles = makeStyles(styles);
+const modalStyle = makeStyles(modalStyles);
 
 const phoneMask = React.forwardRef(function phoneMask(props, ref) {
   const { onChange, ...other } = props;
@@ -61,12 +56,11 @@ phoneMask.propTypes = {
   onChange: PropTypes.func.isRequired,
 };
 
-const useStyles = makeStyles(styles);
-
 function DoReport(props) {
   const classes = useStyles();
+  const modalClasses = modalStyle();
   const { ...rest } = props;
-
+  const [classicModal, setClassicModal] = useState(false); // 모달
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userObj, setUserObj] = useState({});
   useEffect(async () => {
@@ -87,7 +81,37 @@ function DoReport(props) {
         console.error(error);
       });
   }, []);
+  // 지도 관련
+  const [searchKeyword, setSearchKeyword] = useState(""); // 지도 검색 인풋
+  const keywordChange = (event) => {
+    setSearchKeyword(event.target.value);
+  };
 
+  const [Place, setPlace] = useState(""); //
+  const search = () => {
+    // 검색
+    //console.log(Place);
+    setPlace(searchKeyword);
+  };
+  // 위도 경도
+  const [coordinates, setCoordinates] = useState({
+    lat: "",
+    lng: "",
+  });
+
+  const [address, setAddress] = useState(""); //검색된 주소
+
+  const setMarkers = (markers) => {
+    //console.log(markers);
+    if (markers.content) {
+      setAddress(markers.content);
+    } else {
+      setAddress(markers.address);
+    }
+    setCoordinates(markers.position);
+  };
+
+  //////////////////////////////////////////////
   const [foundDate, setFoundDate] = useState(null);
 
   const [values, setValues] = useState({
@@ -95,6 +119,7 @@ function DoReport(props) {
     phone: "",
     foundLocation: "",
     content: "",
+    pass: "",
   });
 
   const handleChange = (event) => {
@@ -126,28 +151,43 @@ function DoReport(props) {
     e.preventDefault();
     if (!isLoggedIn) {
       if (values.name.trim() === "") {
+        alert("이름을 입력해주세요");
         return;
-      } else if (values.phone.trim() === "") {
+      } else if (values.phone.trim() === "" || values.phone.length < 13) {
+        alert("연락처를 입력해주세요");
+        return;
+      } else if (values.pass.trim() === "" || values.pass.trim().length < 4) {
+        alert("비밀번호는 4자리 이상으로 입력해주세요");
         return;
       }
     }
     let foundDateFormat = dayjs(foundDate).format("YYYY-MM-DD");
-    console.log(foundDateFormat);
-    if (
-      foundDateFormat.trim() === "" &&
-      values.foundLocation.trim() === "" &&
-      values.content.trim() === ""
-    ) {
+    //console.log(foundDateFormat);
+    if (foundDateFormat.trim() === "" || foundDateFormat.length < 10) {
+      alert("발견날짜를 입력해주세요");
+      return;
+    } else if (values.foundLocation.trim() === "") {
+      alert("발견장소를 입력해주세요");
+      return;
+    } else if (values.content.trim() === "") {
+      alert("내용을 입력해주세요");
       return;
     }
+
     // console.log();
     const formData = new FormData(document.getElementsByName("reportForm")[0]); // form data 다넣기 multipart/form-data form 임
+
+    if (coordinates.lat !== "" && coordinates.lng !== "") {
+      // 위도경도 추가
+      formData.append("coordinates", [coordinates.lat, coordinates.lng]);
+    }
     //formData.append("uploadedFile", file);
     await axios
       .post("http://10.10.10.168:3001/report", formData, {
         withCredentials: true,
       })
       .then((response) => {
+        alert("등록되었습니다.");
         nav("/report");
       })
       .catch((error) => {
@@ -260,14 +300,22 @@ function DoReport(props) {
                 <Grid item xs={1}>
                   <h5 style={{ textAlign: "center" }}>발견장소</h5>
                 </Grid>
-                <Grid item xs={5}>
+                <Grid item xs={4}>
                   <OutlinedInput
                     fullWidth
-                    helpertext="Incorrect entry."
                     name="foundLocation"
                     value={values.foundLocation}
                     onChange={handleChange}
                   />
+                </Grid>
+                <Grid item xs={1}>
+                  <Button
+                    color="info"
+                    style={{ width: "100%" }}
+                    onClick={() => setClassicModal(true)}
+                  >
+                    검색
+                  </Button>
                 </Grid>
                 {/* <Grid item xs={2}></Grid> */}
                 <Grid item xs={1}>
@@ -280,7 +328,7 @@ function DoReport(props) {
                     value={values.content}
                     onChange={handleChange}
                     multiline
-                    rows={15}
+                    rows={8}
                   />
                 </Grid>
                 <Grid item xs={1}>
@@ -323,7 +371,14 @@ function DoReport(props) {
                       <h5 style={{ textAlign: "center" }}> 비밀번호</h5>
                     </Grid>
                     <Grid item xs={4}>
-                      <OutlinedInput fullWidth type="password" />
+                      <OutlinedInput
+                        fullWidth
+                        type="password"
+                        name="pass"
+                        value={values.pass}
+                        onChange={handleChange}
+                        inputProps={{ maxLength: 10 }}
+                      />
                     </Grid>
                   </>
                 )}
@@ -346,6 +401,78 @@ function DoReport(props) {
 
         <Footer />
       </div>
+      {/* ##########################지도############################ */}
+      <Dialog
+        classes={{
+          root: classes.center,
+          paper: modalClasses.modal,
+        }}
+        maxWidth="lg"
+        fullWidth={true}
+        open={classicModal}
+        // TransitionComponent={Transition}
+        keepMounted
+        //onClose={() => setClassicModal(false)}
+        aria-labelledby="classic-modal-slide-title"
+        aria-describedby="classic-modal-slide-description"
+      >
+        <DialogTitle
+          id="classic-modal-slide-title"
+          disableTypography
+          className={modalClasses.modalHeader}
+        >
+          <IconButton
+            className={modalClasses.modalCloseButton}
+            key="close"
+            aria-label="Close"
+            color="inherit"
+            onClick={() => setClassicModal(false)}
+          >
+            <Close className={modalClasses.modalClose} />
+          </IconButton>
+          <h3 className={modalClasses.modalTitle}>지도 검색</h3>
+        </DialogTitle>
+        <DialogContent
+          id="classic-modal-slide-description"
+          className={modalClasses.modalBody}
+        >
+          {/* -------------------------------------------- */}
+          <div>
+            <OutlinedInput
+              style={{ width: "30%" }}
+              name="keyword"
+              onChange={keywordChange}
+              value={searchKeyword || ""}
+            />
+
+            <Button onClick={search}>검색</Button>
+            <OutlinedInput
+              fullWidth
+              name="location"
+              readOnly
+              value={address || ""}
+            />
+          </div>
+          {/* -------------------------------------------- */}
+          <Kakaomap searchPlace={Place} func={setMarkers} />
+        </DialogContent>
+        <DialogActions className={modalClasses.modalFooter}>
+          <Button
+            color="info"
+            onClick={() => {
+              setValues({
+                ...values,
+                ["foundLocation"]: address,
+              });
+              setClassicModal(false);
+              setAddress("");
+              setSearchKeyword("");
+            }}
+          >
+            확인
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }

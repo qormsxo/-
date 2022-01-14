@@ -1,35 +1,64 @@
 var crud = require("../model/crud");
 var request = require("request");
 
-const apiKey =
-  "wC2klb%2BIVcpUBK2Sd2qExv%2BTmgl%2FT66h6oohdYIrFGoHuVR6bVlFZRr%2FkDONSkI6UuI8iBrNtwKq6sSae165HA%3D%3D";
+// const clinetId = "gygq7dx7oe";
+// const clinetSecret = "qqxM5SqTEKu6app0Ei2vtV0RYiKr09NgYhgF3v9N";
 
-exports.main = (req, res) => {
-  var url =
-    "https://api.odcloud.kr/api/3071040/v1/uddi:4a6d6ef0-b2ae-4b8e-914a-ea645f743d50_201808031350" +
-    "?page=1" +
-    "&perPage=267" +
-    "&returnType=JSON" +
-    "&serviceKey=" +
-    apiKey;
-  request.get(
-    {
-      url: url,
-      json: true,
-      headers: { "User-Agent": "request" },
-    },
-    (err, data) => {
-      if (err) {
-        console.log("Error:", err);
-      } else if (res.statusCode !== 200) {
-        console.log("Status:", res.statusCode);
-      } else {
-        // data is already parsed as JSON:
-        res.send(data.body.data);
-      }
-    }
-  );
-};
+// const devClientId = "pYaYMmvepVNchFyjYf_S";
+// const devClientSecret = "ATZbjKNw_A";
+// request.get(
+//   {
+//     url:
+//       "https://openapi.naver.com/v1/search/local.json" +
+//       "?query=" +
+//       encodeURI("응암동"),
+//     json: true,
+//     headers: {
+//       "User-Agent": "request",
+//       "X-Naver-Client-Id": devClientId,
+//       "X-Naver-Client-Secret": devClientSecret,
+//     },
+//   },
+//   (err, data) => {
+//     if (err) {
+//       console.log("Error:", err);
+//     } else {
+//       // data is already parsed as JSON:
+//       console.log(data.body);
+//       // res.send(data.body.data);
+//     }
+//   }
+// );
+
+// exports.main = (req, res) => {
+//   let address = "응암동 427-101";
+//   var url =
+//     "https://naveropenapi.apigw.ntruss.com/map-geocode/v2/geocode" +
+//     "?query=" +
+//     encodeURI(address);
+//   request.get(
+//     {
+//       url: url,
+//       json: true,
+//       headers: {
+//         "User-Agent": "request",
+//         "X-NCP-APIGW-API-KEY-ID": clinetId,
+//         "X-NCP-APIGW-API-KEY": clinetSecret,
+//       },
+//     },
+//     (err, data) => {
+//       if (err) {
+//         console.log("Error:", err);
+//       } else if (res.statusCode !== 200) {
+//         console.log("Status:", res.statusCode);
+//       } else {
+//         // data is already parsed as JSON:
+//         console.log(data.body);
+//         res.send(data.body.data);
+//       }
+//     }
+//   );
+// };
 
 exports.insertUser = (req, res) => {
   console.log(req.body);
@@ -63,6 +92,27 @@ exports.insertUser = (req, res) => {
       });
     } else if (Object.keys(docs[0]).includes("user_id")) {
       res.send({ status: false, message: "사용중인 아이디입니다." });
+    } else {
+      res.send(404);
+    }
+  });
+};
+
+exports.updateUser = (req, res) => {
+  let { userId, userPw, name, phone } = req.body;
+
+  // 등록
+  let sql =
+    "UPDATE user_tbl SET user_pw=?, user_name=?, user_phone=?  WHERE user_id=?;";
+  let setInfo = {
+    dbName: "endangered",
+    query: sql,
+    params: [userPw, name, phone, userId],
+  };
+  crud.sql(setInfo, (result) => {
+    console.log(result);
+    if (result.affectedRows > 0) {
+      res.send({ status: true });
     } else {
       res.send(404);
     }

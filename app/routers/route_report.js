@@ -17,6 +17,7 @@ module.exports = function (app) {
   app.get("/reportdetail", report.getReportDetail);
 
   app.put("/report", upload.single("uploadedFile"), report.updateReport);
+  app.delete("/report", report.deleteReport);
 };
 
 // var multipartMiddleware = multipart();

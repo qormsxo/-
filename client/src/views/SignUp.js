@@ -9,7 +9,8 @@ import KeyIcon from "@mui/icons-material/Key";
 import People from "@material-ui/icons/People";
 import PhoneEnabledIcon from "@mui/icons-material/PhoneEnabled";
 
-import TextField from "@mui/material/TextField";
+//import TextField from "@mui/material/TextField";
+import { TextField } from "@material-ui/core";
 import LockIcon from "@mui/icons-material/Lock";
 // core components
 import Header from "components/Header/Header.js";
@@ -47,17 +48,19 @@ import PropTypes from "prop-types";
 const useStyles = makeStyles(styles);
 const modalStyle = makeStyles(modalStyles);
 
-const phoneMask = forwardRef(function phoneMask(props, ref) {
+const phoneMask = React.forwardRef(function phoneMask(props, ref) {
   const { onChange, ...other } = props;
   return (
     <IMaskInput
       {...other}
-      mask="000-0000-0000"
+      mask="###-####-####"
       definitions={{
         "#": /[0-9]/,
       }}
       inputRef={ref}
-      onAccept={(value) => onChange({ target: { name: props.name, value } })}
+      onAccept={(value) => {
+        onChange({ target: { name: props.name, value } });
+      }}
       overwrite
     />
   );
@@ -92,7 +95,7 @@ export default function SignUp(props) {
       });
   }, []);
 
-  const [classicModal, setClassicModal] = React.useState(false); // 모달
+  const [classicModal, setClassicModal] = useState(false); // 모달
 
   // input state
   const [inputs, setInputs] = useState({
@@ -136,22 +139,23 @@ export default function SignUp(props) {
 
   // input onChange
   const onChange = (e) => {
-    const { id, value } = e.target;
-    console.log(id);
-    let name = validation(id === "name", nameError, value);
-    let userId = validation(id === "userId", userIdError, value);
-    let phone = validation(id === "phone", phoneError, value);
-    let pass = validation(id === "pass", passError, value);
+    const { name, value } = e.target;
+    //console.log(e);
+
+    let userName = validation(name === "name", nameError, value);
+    let userId = validation(name === "userId", userIdError, value);
+    let phone = validation(name === "phone", phoneError, value);
+    let pass = validation(name === "pass", passError, value);
 
     setBoolean({
-      nameError: name ? false : nameError,
+      nameError: userName ? false : nameError,
       userIdError: userId ? false : userIdError,
       phoneError: phone ? false : phoneError,
       passError: pass ? false : passError,
     });
 
     setHelperText({
-      nameHepler: name ? " " : nameHepler,
+      nameHepler: userName ? " " : nameHepler,
       userIdHelper: userId ? " " : userIdHelper,
       phoneHelper: phone ? " " : phoneHelper,
       passHepler: pass ? " " : passHepler,
@@ -159,7 +163,7 @@ export default function SignUp(props) {
 
     setInputs({
       ...inputs,
-      [id]: value,
+      [name]: value,
     });
   };
 
@@ -179,7 +183,7 @@ export default function SignUp(props) {
 
     setHelperText({
       nameHepler: nameCheck ? "이름을 입력해주세요" : nameHepler,
-      userIdHelper: userIdCheck ? "이메일을 입력해주세요" : userIdHelper,
+      userIdHelper: userIdCheck ? "아이디를 입력해주세요" : userIdHelper,
       phoneHelper: phoneCheck ? "전화번호를 입력해주세요" : phoneHelper,
       passHepler: passCheck ? "비밀번호를 입력해주세요" : passHepler,
     });
@@ -250,7 +254,7 @@ export default function SignUp(props) {
               <Card className={classes[cardAnimaton]}>
                 <form className={classes.form}>
                   <CardHeader color="success" className={classes.cardHeader}>
-                    <h3>Sign Up</h3>
+                    <h3>회원가입</h3>
                   </CardHeader>
                   <p className={classes.divider}>Or Be Classical</p>
                   <CardBody>
@@ -259,7 +263,7 @@ export default function SignUp(props) {
                       helperText={nameHepler}
                       variant="standard"
                       label="Name..."
-                      id="name"
+                      name="name"
                       error={nameError}
                       InputProps={{
                         type: "text",
@@ -279,7 +283,7 @@ export default function SignUp(props) {
                       helperText={userIdHelper}
                       variant="standard"
                       label="ID..."
-                      id="userId"
+                      name="userId"
                       error={userIdError}
                       InputProps={{
                         type: "text",
@@ -298,20 +302,18 @@ export default function SignUp(props) {
                       helperText={phoneHelper}
                       variant="standard"
                       label="Phone..."
-                      id="phone"
                       name="phone"
                       error={phoneError}
                       value={phone}
-                      //onChange={onChange}
+                      onChange={onChange}
+                      inputProps={{ maxLength: 13 }}
                       InputProps={{
-                        type: "text",
                         inputComponent: phoneMask,
                         endAdornment: (
                           <InputAdornment position="end">
                             <PhoneEnabledIcon />
                           </InputAdornment>
                         ),
-                        autoComplete: "off",
                       }}
                     />
                     <TextField
@@ -319,7 +321,7 @@ export default function SignUp(props) {
                       helperText={passHepler}
                       variant="standard"
                       label="Password"
-                      id="pass"
+                      name="pass"
                       error={passError}
                       InputProps={{
                         type: "password",
@@ -343,7 +345,7 @@ export default function SignUp(props) {
                         isNull();
                       }}
                     >
-                      Sign Up
+                      가입
                     </Button>
                   </CardFooter>
                 </form>
@@ -365,7 +367,7 @@ export default function SignUp(props) {
         open={classicModal}
         // TransitionComponent={Transition}
         keepMounted
-        onClose={() => setClassicModal(false)}
+        ///onClose={() => setClassicModal(false)}
         aria-labelledby="classic-modal-slide-title"
         aria-describedby="classic-modal-slide-description"
       >

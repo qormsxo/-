@@ -134,7 +134,7 @@ export default function SignUp(props) {
     });
 
     setHelperText({
-      userIdHelper: userIdCheck ? "이메일을 입력해주세요" : userIdHelper,
+      userIdHelper: userIdCheck ? "아이디를 입력해주세요" : userIdHelper,
       passHepler: passCheck ? "비밀번호를 입력해주세요" : passHepler,
     });
     const login = async () => {
@@ -201,7 +201,7 @@ export default function SignUp(props) {
               <Card className={classes[cardAnimaton]}>
                 <form className={classes.form}>
                   <CardHeader color="info" className={classes.cardHeader}>
-                    <h3>Log In</h3>
+                    <h3>로그인</h3>
                   </CardHeader>
                   <CardBody>
                     <TextField
@@ -252,7 +252,7 @@ export default function SignUp(props) {
                         isNull();
                       }}
                     >
-                      Log In
+                      로그인
                     </Button>
                   </CardFooter>
                 </form>

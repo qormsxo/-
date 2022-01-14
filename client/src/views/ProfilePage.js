@@ -1,45 +1,38 @@
-// nodejs library that concatenates classes
 import React, { useEffect, useState } from "react";
+// nodejs library that concatenates classes
 import classNames from "classnames";
-import axios from "axios";
-// import { Link } from "react-router-dom";
-import { DataGrid, useGridApiContext, useGridState } from "@mui/x-data-grid";
+// @material-ui/core components
 import { makeStyles } from "@material-ui/core/styles";
 
 import Header from "components/Header/Header.js";
+import Footer from "components/Footer/Footer.js";
+import Button from "components/CustomButtons/Button.js";
 import GridContainer from "components/Grid/GridContainer.js";
 import GridItem from "components/Grid/GridItem.js";
-// import Button from "components/CustomButtons/Button.js";
-import Parallax from "components/Parallax/Parallax.js";
 import HeaderLinks from "components/Header/HeaderLinks.js";
-import Pagination from "@mui/material/Pagination";
-import Footer from "components/Footer/Footer";
-import Typography from "./MySections/TypographySection";
-// @material-ui/icons
-import SpaIcon from "@mui/icons-material/Spa";
+import Parallax from "components/Parallax/Parallax.js";
 
-import styles from "assets/jss/material-kit-react/views/components.js";
+import { Pagination, PaginationItem, Stack } from "@mui/material";
 
-import { PaginationItem } from "@mui/material";
-import Success from "components/Typography/Success";
-import { useNavigate } from "react-router-dom";
+import styles from "assets/jss/material-kit-react/views/profilePage.js";
+import axios from "axios";
+import { DataGrid, useGridApiContext, useGridState } from "@mui/x-data-grid";
+import { Link, useNavigate } from "react-router-dom";
 
 const useStyles = makeStyles(styles);
 
-function Report(props) {
+export default function ProfilePage(props) {
   const classes = useStyles();
-
   const { ...rest } = props;
-
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userObj, setUserObj] = useState({});
-
   const [rows, setRows] = useState([]);
   const [rowCount, setRowCount] = useState(0);
   const [page, setPage] = useState(0); //처음 페이지는 0
   const [sortModel, setSortModel] = useState([
     { field: "report_id", sort: "desc" },
   ]);
+  const nav = useNavigate();
   useEffect(async () => {
     await axios
       .get("http://10.10.10.168:3001/session", {
@@ -50,20 +43,28 @@ function Report(props) {
         if (response.data) {
           setIsLoggedIn(true);
           setUserObj(response.data);
+          getReport(page, sortModel, response.data.user_id);
         } else {
           setIsLoggedIn(false);
+          nav("/");
         }
       })
       .catch((error) => {
         console.error(error);
       });
-    getReport(page, sortModel);
   }, []);
-  const getReport = async (page, newModel) => {
+
+  const rowClick = (e) => {
+    console.log(e);
+
+    nav("/report-details" + e.row.report_id);
+  };
+  const getReport = async (page, newModel, user_id) => {
     //console.log(page);
     //목록 가져오기
     let params = {
       page: page,
+      user_id: !user_id ? userObj.user_id : user_id,
     };
     if (newModel) {
       Object.assign(params, newModel[0]);
@@ -145,82 +146,93 @@ function Report(props) {
       />
     );
   }
-  const nav = useNavigate();
-  const rowClick = (e) => {
-    nav("/report-details" + e.row.report_id);
-  };
   return (
-    <div style={{ background: "white" }}>
+    <div>
       <Header
         brand="멸종위기 야생생물 포털"
         rightLinks={<HeaderLinks isLoggedIn={isLoggedIn} userObj={userObj} />}
-        color="info"
         fixed
+        color="transparent"
         changeColorOnScroll={{
           height: 200,
           color: "white",
         }}
         {...rest}
       />
-      <Parallax image={require("assets/img/bg.jpg")} style={{ height: "40vh" }}>
-        <div className={classes.container}>
-          <GridContainer>
-            <GridItem>
-              <div className={classes.brand}>
-                <h3 className={classes.subtitle}>멸종위기 야생생물 발견제보</h3>
-                {/* <h2 className={classes.title}>야생생물이 살아납니다!</h2> */}
-              </div>
-            </GridItem>
-          </GridContainer>
-        </div>
-      </Parallax>
+      <Parallax small filter image={require("assets/img/profile-bg.jpg")} />
       <div className={classNames(classes.main, classes.mainRaised)}>
-        <div className={classes.container} style={{ padding: "70px 0" }}>
-          <Success
-            children={
-              <h3>
-                <SpaIcon /> &nbsp; 발견제보
-              </h3>
-            }
-          />
-          <div style={{ height: 650, width: "100%" }}>
-            <DataGrid
-              sx={{
-                "& .th": {
-                  backgroundColor: "#D8D8D8",
-                  fontWeight: "bold",
-                },
-              }}
-              rows={rows}
-              getRowId={(row) => row.report_id}
-              columns={columns}
-              pageSize={10}
-              rowCount={rowCount}
-              paginationMode="server"
-              rowsPerPageOptions={[10]}
-              onPageChange={(newPage) => {
-                //console.log(newPage);
-                setPage(newPage);
-                getReport(newPage, sortModel);
-              }}
-              sortingMode="server"
-              sortingOrder={["desc", "asc"]}
-              onSortModelChange={(newModel) => {
-                getReport(page, newModel);
-                setSortModel(newModel);
-              }}
-              onCellDoubleClick={rowClick}
-              disableColumnMenu // 컬럼 메뉴 비활성화
-              components={{ Pagination: CustomPagination }}
-              headerHeight={50} // th 크기
-              // checkboxSelection
-            />
+        <div>
+          <div className={classes.container}>
+            <GridContainer justifyContent="center">
+              <GridItem xs={12} sm={12} md={6}>
+                <div className={classes.profile}>
+                  {/* <div>
+                    <img src={profile} alt="..." className={imageClasses} />
+                  </div> */}
+                  <div className={classes.name} style={{ marginTop: "30px" }}>
+                    <h3 className={classes.title}>{userObj.user_name} </h3>
+                    <h5>{userObj.user_id}</h5>
+                  </div>
+                </div>
+              </GridItem>
+            </GridContainer>
+            <div className={classes.description}>
+              <h4>
+                <b>{userObj.user_phone}</b>
+              </h4>
+              <Link to="/profile-update">
+                <Button color="info">프로필 수정</Button>
+              </Link>
+            </div>
+            <div className={classes.container} style={{ padding: "20px 0" }}>
+              <div style={{ height: 650, width: "100%" }}>
+                <DataGrid
+                  sx={{
+                    "& .th": {
+                      backgroundColor: "#D8D8D8",
+                    },
+                  }}
+                  rows={rows}
+                  getRowId={(row) => row.report_id}
+                  columns={columns}
+                  pageSize={10}
+                  rowCount={rowCount}
+                  paginationMode="server"
+                  rowsPerPageOptions={[10]}
+                  onPageChange={(newPage) => {
+                    //console.log(newPage);
+                    setPage(newPage);
+                    getReport(newPage, sortModel);
+                  }}
+                  sortingMode="server"
+                  sortingOrder={["desc", "asc"]}
+                  onSortModelChange={(newModel) => {
+                    getReport(page, newModel);
+                    setSortModel(newModel);
+                  }}
+                  onCellDoubleClick={rowClick}
+                  disableColumnMenu // 컬럼 메뉴 비활성화
+                  components={{
+                    Pagination: CustomPagination,
+                    NoRowsOverlay: () => (
+                      <Stack
+                        height="100%"
+                        alignItems="center"
+                        justifyContent="center"
+                      >
+                        아직 제보를 하지 않았습니다.
+                      </Stack>
+                    ),
+                  }}
+                  headerHeight={50} // th 크기
+                  // checkboxSelection
+                />
+              </div>
+            </div>
           </div>
         </div>
-        <Footer />
       </div>
+      <Footer />
     </div>
   );
 }
-
-export default Report;

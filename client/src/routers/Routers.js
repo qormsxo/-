@@ -13,7 +13,8 @@ import Species from "views/Species";
 import Report from "views/Report";
 import DoReport from "views/DoReport";
 import ReportDetail from "views/ReportDetails";
-
+import ProfilePage from "views/ProfilePage";
+import ProfileUpdate from "views/ProfileUpdate";
 const AppRouter = () => {
   return (
     <Router>
@@ -26,6 +27,8 @@ const AppRouter = () => {
           <Route path={"/report"} element={<Report />}></Route>
           <Route path={"/do-report"} element={<DoReport />}></Route>
           <Route path="/report-details:id" element={<ReportDetail />}></Route>
+          <Route path={"/profile"} element={<ProfilePage />}></Route>
+          <Route path={"/profile-update"} element={<ProfileUpdate />}></Route>
           <Route path="*" element={<Navigate to="/" />} />
         </>
       </Routes>
