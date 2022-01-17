@@ -146,7 +146,7 @@ function ReportDetail(props) {
   };
   // 비밀번호 체크
   const passwordCheck = () => {
-    if (password == document.getElementById("password").value) {
+    if (password === document.getElementById("password").value) {
       if (mode === "modify") {
         setPassInput(false, setReadOnly(false));
       } else if (mode === "delete") {
@@ -241,24 +241,27 @@ function ReportDetail(props) {
       });
   };
 
-  useEffect(async () => {
-    await axios
-      .get("http://10.10.10.168:3001/session", {
-        withCredentials: true,
-      })
-      .then((response) => {
-        if (response.data) {
-          setIsLoggedIn(true);
-          setUserObj(response.data);
-          getReport(true, response.data);
-        } else {
-          setIsLoggedIn(false);
-          getReport(false, null);
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-      });
+  useEffect(() => {
+    async function getSession() {
+      await axios
+        .get("http://10.10.10.168:3001/session", {
+          withCredentials: true,
+        })
+        .then((response) => {
+          if (response.data) {
+            setIsLoggedIn(true);
+            setUserObj(response.data);
+            getReport(true, response.data);
+          } else {
+            setIsLoggedIn(false);
+            getReport(false, null);
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    }
+    getSession();
   }, []);
 
   const handleChange = (event) => {
@@ -294,7 +297,7 @@ function ReportDetail(props) {
       //console.log(beforeFileName, file.file , )
       formData.append("fileModify", true);
       formData.append("beforeImgName", imgurl.split("uploads/")[1]);
-    } else if (file.file !== "" && beforeFileName == "") {
+    } else if (file.file !== "" && beforeFileName === "") {
       // 없다가 생김
       formData.append("fileModify", true);
     } else {
