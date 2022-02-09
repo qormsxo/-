@@ -82,6 +82,9 @@ export default function HeaderLinks(props) {
                 <Link to="/do-report" className={classes.dropdownLink}>
                   제보하기
                 </Link>,
+                <Link to="/report-status" className={classes.dropdownLink}>
+                  제보현황
+                </Link>,
               ]}
             />
           </ListItem>
@@ -151,21 +154,12 @@ export default function HeaderLinks(props) {
                 <Link to="/do-report" className={classes.dropdownLink}>
                   제보하기
                 </Link>,
+                <Link to="/report-status" className={classes.dropdownLink}>
+                  제보현황
+                </Link>,
               ]}
             />
           </ListItem>
-          {/* <ListItem className={classes.listItem}>
-            <Link to="/report" className={classes.white}>
-              <Button
-                href=""
-                color="transparent"
-                target="_blank"
-                className={classes.navLink}
-              >
-                <h6 style={{ marginTop: "5px" }}> 제보 조회</h6>
-              </Button>
-            </Link>
-          </ListItem> */}
           <ListItem className={classes.listItem}>
             <Link to="/species" className={classes.white}>
               <Button

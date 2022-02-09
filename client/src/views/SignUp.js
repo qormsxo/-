@@ -71,7 +71,7 @@ phoneMask.propTypes = {
 };
 
 export default function SignUp(props) {
-  const [cardAnimaton, setCardAnimation] = React.useState("cardHidden");
+  const [cardAnimaton, setCardAnimation] = useState("cardHidden");
   setTimeout(function () {
     setCardAnimation("");
   }, 700);

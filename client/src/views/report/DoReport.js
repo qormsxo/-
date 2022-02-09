@@ -1,4 +1,3 @@
-/* global kakao */
 import React, { useEffect, useState } from "react";
 import classNames from "classnames";
 import axios from "axios";
@@ -22,7 +21,7 @@ import LocalizationProvider from "@mui/lab/LocalizationProvider";
 import AdapterDateFns from "@mui/lab/AdapterDateFns";
 import DesktopDatePicker from "@mui/lab/DesktopDatePicker";
 import { useNavigate } from "react-router-dom";
-import Kakaomap from "./Map";
+import Kakaomap from "../Map";
 import {
   Dialog,
   DialogActions,
@@ -58,12 +57,15 @@ phoneMask.propTypes = {
 
 function DoReport(props) {
   const classes = useStyles();
+  const nav = useNavigate();
   const modalClasses = modalStyle();
   const { ...rest } = props;
   const [classicModal, setClassicModal] = useState(false); // 모달
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userObj, setUserObj] = useState({});
-  useEffect(async () => {
+
+  // 세션 가져오기
+  const getSession = async () => {
     await axios
       .get("http://10.10.10.168:3001/session", {
         withCredentials: true,
@@ -73,6 +75,9 @@ function DoReport(props) {
         if (response.data) {
           setIsLoggedIn(true);
           setUserObj(response.data);
+          if (response.data.is_admin) {
+            nav(-1);
+          }
         } else {
           setIsLoggedIn(false);
         }
@@ -80,6 +85,9 @@ function DoReport(props) {
       .catch((error) => {
         console.error(error);
       });
+  };
+  useEffect(() => {
+    getSession();
   }, []);
   // 지도 관련
   const [searchKeyword, setSearchKeyword] = useState(""); // 지도 검색 인풋
@@ -95,8 +103,11 @@ function DoReport(props) {
   };
   // 위도 경도
   const [coordinates, setCoordinates] = useState({
-    lat: "",
-    lng: "",
+    position: {
+      lat: "",
+      lng: "",
+    },
+    content: "",
   });
 
   const [address, setAddress] = useState(""); //검색된 주소
@@ -108,7 +119,7 @@ function DoReport(props) {
     } else {
       setAddress(markers.address);
     }
-    setCoordinates(markers.position);
+    setCoordinates(markers);
   };
 
   //////////////////////////////////////////////
@@ -145,8 +156,6 @@ function DoReport(props) {
     setFile("");
   };
 
-  const nav = useNavigate();
-
   const report = async (e) => {
     e.preventDefault();
     if (!isLoggedIn) {
@@ -173,13 +182,12 @@ function DoReport(props) {
       alert("내용을 입력해주세요");
       return;
     }
-
-    // console.log();
     const formData = new FormData(document.getElementsByName("reportForm")[0]); // form data 다넣기 multipart/form-data form 임
 
-    if (coordinates.lat !== "" && coordinates.lng !== "") {
+    if (coordinates.position.lat !== "" && coordinates.position.lng !== "") {
       // 위도경도 추가
-      formData.append("coordinates", [coordinates.lat, coordinates.lng]);
+      formData.append("lat", coordinates.position.lat);
+      formData.append("lng", coordinates.position.lng);
     }
     //formData.append("uploadedFile", file);
     await axios
@@ -304,6 +312,7 @@ function DoReport(props) {
                   <OutlinedInput
                     fullWidth
                     name="foundLocation"
+                    readOnly
                     value={values.foundLocation}
                     onChange={handleChange}
                   />
@@ -462,7 +471,7 @@ function DoReport(props) {
             onClick={() => {
               setValues({
                 ...values,
-                ["foundLocation"]: address,
+                foundLocation: address,
               });
               setClassicModal(false);
               setAddress("");

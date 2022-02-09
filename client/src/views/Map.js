@@ -1,6 +1,5 @@
 /* global kakao */
 import React, { useEffect, useState } from "react";
-import classNames from "classnames";
 import { Map, MapMarker } from "react-kakao-maps-sdk";
 
 const { kakao } = window;
@@ -11,8 +10,8 @@ function Kakaomap(props) {
   const [info, setInfo] = useState();
   //좌표
   const [{ lat, lng }, setGeometricData] = useState({
-    lat: 37.554389125882096,
-    lng: 126.9722955537647,
+    lat: 37.5546788388674,
+    lng: 126.970606917394,
   });
   const [markers, setMarkers] = useState([
     {
@@ -20,6 +19,8 @@ function Kakaomap(props) {
         lat: lat,
         lng: lng,
       },
+      content: "서울역",
+      address: "",
     },
   ]);
   const [map, setMap] = useState();
@@ -27,8 +28,14 @@ function Kakaomap(props) {
   useEffect(() => {
     //console.log(position);
     if (position) {
-      setGeometricData(position);
-      setMarkers([{ position: position }]);
+      setGeometricData(position.position);
+      setMarkers([
+        {
+          position: position.position,
+          content: position.content ? position.content : "",
+          address: position.address ? position.address : "",
+        },
+      ]);
     }
   }, [position]);
 
@@ -147,7 +154,7 @@ function Kakaomap(props) {
             key={`marker-${index}-${marker.position.lat},${marker.position.lng}`}
             position={marker.position}
             onClick={() => {
-              //console.log(index);
+              console.log(marker);
               func(marker);
             }}
           >

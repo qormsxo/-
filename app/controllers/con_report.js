@@ -1,5 +1,6 @@
 var crud = require("../model/crud");
 const fs = require("fs");
+let answerFunc = require("./con_answer_func");
 
 exports.getReport = (req, res) => {
   console.log(req.query);
@@ -40,7 +41,7 @@ exports.getReport = (req, res) => {
       " report r  LEFT OUTER JOIN user_tbl ut ON r.report_writer_id  = ut.user_id ";
 
     let col =
-      " r.report_id  , r.report_title , ifnull(r.report_name , ut.user_name) AS writer,r.report_date_discovery, r.report_date ";
+      " r.report_id  , r.report_title , ifnull(r.report_name , ut.user_name) AS writer,r.report_date_discovery, r.report_date , if(r.report_check , '답변완료', '답변대기') AS report_check  ";
     if (user_id) {
       table =
         " report r  INNER JOIN user_tbl ut ON r.report_writer_id  = ut.user_id  AND ut.user_id = ? ";
@@ -105,7 +106,7 @@ exports.insertReport = (req, res) => {
   console.log(req.body);
   // console.log(req.session.loginData);
 
-  let { name, phone, foundDate, foundLocation, content, pass, coordinates } =
+  let { name, phone, foundDate, foundLocation, content, pass, lat, lng } =
     req.body;
   let filePath = req.file ? `/uploads/${req.file.filename}` : null;
 
@@ -117,8 +118,8 @@ exports.insertReport = (req, res) => {
   // 로그인하지 않았을 때
   if (!req.session.loginData) {
     col =
-      "(report_title, report_content, report_img,  report_name, report_writer_phone, report_date, report_date_discovery, report_location, report_password)";
-    val = " ?,?,?,?,?,NOW(),?,?,? ";
+      "(report_title, report_content, report_img,  report_name, report_writer_phone, report_date, report_date_discovery, report_lat, report_lng, report_password)";
+    val = " ?,?,?,?,?,NOW(),?,?,?,? ";
     params.push(
       foundLocation,
       content,
@@ -126,21 +127,23 @@ exports.insertReport = (req, res) => {
       name,
       phone,
       foundDate,
-      coordinates ? coordinates : null,
+      lat ? lat : null,
+      lng ? lng : null,
       pass
     );
   } else {
     let { user_id } = req.session.loginData;
     col =
-      "(report_title, report_content, report_img, report_writer_id, report_date, report_date_discovery, report_location)";
-    val += " ?,?,?,?,NOW(),?,? ";
+      "(report_title, report_content, report_img, report_writer_id, report_date, report_date_discovery, report_lat, report_lng)";
+    val += " ?,?,?,?,NOW(),?,?,? ";
     params.push(
       foundLocation,
       content,
       filePath,
       user_id,
       foundDate,
-      coordinates ? coordinates : null
+      lat ? lat : null,
+      lng ? lng : null
     );
   }
 
@@ -151,6 +154,8 @@ exports.insertReport = (req, res) => {
     query: insertSql,
     params: params,
   };
+
+  console.log(insertSql + params);
 
   crud.sql(insertInfo, (result) => {
     if (result.affectedRows > 0) {
@@ -163,11 +168,15 @@ exports.insertReport = (req, res) => {
 
 exports.getReportDetail = (req, res) => {
   console.log(req.query);
-  let col = " r.* , ut.user_id ,ut.user_name, ut.user_phone FROM report r ";
+
+  let col = " r.* , ut.user_id ,ut.user_name, ut.user_phone ";
+
   let sql =
     "SELECT " +
     col +
-    "LEFT OUTER JOIN user_tbl ut ON r.report_writer_id  = ut.user_id  WHERE r.report_id =?";
+    " FROM report r LEFT OUTER JOIN user_tbl ut ON r.report_writer_id  = ut.user_id " + // 유저 조인
+    "WHERE r.report_id =? "; //  where
+  console.log(sql);
   let sqlInfo = {
     dbName: "endangered",
     query: sql,
@@ -175,11 +184,22 @@ exports.getReportDetail = (req, res) => {
   };
   crud.sql(sqlInfo, (result) => {
     const imgUrl = "http://10.10.10.168:3001";
-    result[0].imgurl = imgUrl + result[0].report_img; //imgUrl+"kitty.png"
-    console.log(result);
-    res.send(result[0]);
+    let resultJson = result[0];
+    resultJson.imgurl = imgUrl + resultJson.report_img; //imgUrl+"kitty.png"
+    //console.log(result[0]);
+    if (resultJson.report_check === 1) {
+      resultJson.report_check = true;
+    } else {
+      resultJson.report_check = false;
+    }
+
+    // 답변 가져오는 함수
+    answerFunc.getAnswer(req.query.id, (answer) => {
+      Object.assign(resultJson, answer[0]);
+      console.log(resultJson);
+      res.send(resultJson);
+    });
   });
-  //res.sendStatus(200);
 };
 
 exports.updateReport = (req, res) => {
@@ -193,7 +213,8 @@ exports.updateReport = (req, res) => {
     content,
     fileModify,
     beforeImgName,
-    coordinates,
+    lat,
+    lng,
   } = req.body;
 
   let parmas = [foundLocation, content, foundDate];
@@ -221,9 +242,9 @@ exports.updateReport = (req, res) => {
     parmas.push(name, phone); // 로그인하지 않았을 시
   }
 
-  if (coordinates) {
-    col += " , report_location = ? ";
-    parmas.push(coordinates);
+  if (lat && lng) {
+    col += " , report_lat = ? , report_lng = ? ";
+    parmas.push(lat, lng);
   }
 
   let sql = "UPDATE report " + col + "WHERE report_id=?;";
@@ -246,7 +267,7 @@ exports.updateReport = (req, res) => {
 };
 
 exports.deleteReport = (req, res) => {
-  console.log(req.body);
+  //console.log(req.body);
 
   let { id, filename } = req.body;
 
@@ -269,7 +290,11 @@ exports.deleteReport = (req, res) => {
 
   crud.sql(deleteInfo, (result) => {
     if (result.affectedRows > 0) {
-      res.sendStatus(200);
+      // 답변 삭제
+      answerFunc.deletfunc(id, (callback) => {
+        console.log(callback);
+        res.sendStatus(200);
+      });
     } else {
       res.sendStatus(404);
     }

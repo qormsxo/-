@@ -1,12 +1,7 @@
 import React, { useEffect, useState } from "react";
-// nodejs library that concatenates classes
 import classNames from "classnames";
-// @material-ui/core components
 import { makeStyles } from "@material-ui/core/styles";
-// @material-ui/icons
-
 import ManageAccountsRoundedIcon from "@mui/icons-material/ManageAccountsRounded";
-// core components
 import Header from "components/Header/Header.js";
 import Footer from "components/Footer/Footer.js";
 import Button from "components/CustomButtons/Button.js";
@@ -14,13 +9,9 @@ import GridContainer from "components/Grid/GridContainer.js";
 import GridItem from "components/Grid/GridItem.js";
 import HeaderLinks from "components/Header/HeaderLinks.js";
 import Parallax from "components/Parallax/Parallax.js";
-
 import PhoneEnabledIcon from "@mui/icons-material/PhoneEnabled";
-import KeyIcon from "@mui/icons-material/Key";
-
 import styles from "assets/jss/material-kit-react/views/profilePage.js";
 import axios from "axios";
-
 import { InputAdornment, TextField } from "@material-ui/core";
 import { Link, useNavigate } from "react-router-dom";
 import Card from "components/Card/Card";
@@ -60,7 +51,7 @@ export default function ProfileUpdate(props) {
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userObj, setUserObj] = useState({});
-  const [classicModal, setClassicModal] = React.useState(false); // 모달
+  //const [classicModal, setClassicModal] = useState(false); // 모달
 
   // input state
   const [inputs, setInputs] = useState({
@@ -69,9 +60,11 @@ export default function ProfileUpdate(props) {
     pass: "",
   });
 
-  const { name, userId, phone, pass } = inputs;
+  const { name, phone, pass } = inputs;
   const nav = useNavigate();
-  useEffect(async () => {
+
+  // 세션 가져오기
+  const getSession = async () => {
     await axios
       .get("http://10.10.10.168:3001/session", {
         withCredentials: true,
@@ -84,7 +77,6 @@ export default function ProfileUpdate(props) {
             response.data,
             setInputs({
               name: response.data.user_name,
-              userId: response.data.user_id,
               phone: response.data.user_phone,
               pass: "",
             })
@@ -97,6 +89,10 @@ export default function ProfileUpdate(props) {
       .catch((error) => {
         console.error(error);
       });
+  };
+
+  useEffect(() => {
+    getSession();
   }, []);
 
   // helperText State
@@ -106,7 +102,7 @@ export default function ProfileUpdate(props) {
     passHepler: " ",
   });
 
-  const { nameHepler, userIdHelper, phoneHelper, passHepler } = helperText;
+  const { nameHepler, phoneHelper, passHepler } = helperText;
 
   // input error state
   const [boolean, setBoolean] = useState({
@@ -115,7 +111,7 @@ export default function ProfileUpdate(props) {
     passError: false,
   });
 
-  const { nameError, userIdError, phoneError, passError } = boolean;
+  const { nameError, phoneError, passError } = boolean;
 
   //  널 체크 후 텍스트 입력 시 원상복구
   const validation = (id, boolean, value) => {
@@ -201,13 +197,11 @@ export default function ProfileUpdate(props) {
         } else if (!response.data.status) {
           setBoolean({
             nameError,
-            userIdError: true,
             phoneError,
             passError,
           });
           setHelperText({
             nameHepler,
-            userIdHelper: response.data.message,
             phoneError,
             passHepler,
           });

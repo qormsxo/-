@@ -80,3 +80,19 @@ exports.getClass = (req, res) => {
     res.send(array);
   });
 };
+
+exports.getSpcs = (req, res) => {
+  let { classification } = req.query;
+
+  let sql = " SELECT spcs_num, name  FROM endng_spcs  WHERE classification = ?";
+
+  let classInfo = {
+    dbName: "endangered",
+    query: sql,
+    params: [classification],
+  };
+
+  crud.sql(classInfo, (result) => {
+    res.send(result);
+  });
+};

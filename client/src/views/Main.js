@@ -3,9 +3,7 @@ import React, { useEffect, useState } from "react";
 import classNames from "classnames";
 import axios from "axios";
 // import { Link } from "react-router-dom";
-
 import { makeStyles } from "@material-ui/core/styles";
-
 import Header from "components/Header/Header.js";
 import GridContainer from "components/Grid/GridContainer.js";
 import GridItem from "components/Grid/GridItem.js";
@@ -13,10 +11,8 @@ import GridItem from "components/Grid/GridItem.js";
 import Parallax from "components/Parallax/Parallax.js";
 import HeaderLinks from "components/Header/HeaderLinks.js";
 // import MainSections from "./MySections/MainSections";
-
 import styles from "assets/jss/material-kit-react/views/components.js";
 import ProductSection from "./MySections/ProductSection";
-import TeamSection from "./MySections/TeamSection";
 import Carousel from "./MySections/CarouselSection";
 import Footer from "components/Footer/Footer";
 
@@ -28,13 +24,14 @@ function Main(props) {
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userObj, setUserObj] = useState({});
-  useEffect(async () => {
+
+  const getSession = async () => {
     await axios
       .get("http://10.10.10.168:3001/session", {
         withCredentials: true,
       })
       .then((response) => {
-        console.log(response.data);
+        //console.log(response.data);
         if (response.data) {
           setIsLoggedIn(true);
           setUserObj(response.data);
@@ -45,6 +42,10 @@ function Main(props) {
       .catch((error) => {
         console.error(error);
       });
+  };
+
+  useEffect(() => {
+    getSession();
   }, []);
   return (
     <div>

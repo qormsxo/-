@@ -1,64 +1,4 @@
 var crud = require("../model/crud");
-var request = require("request");
-
-// const clinetId = "gygq7dx7oe";
-// const clinetSecret = "qqxM5SqTEKu6app0Ei2vtV0RYiKr09NgYhgF3v9N";
-
-// const devClientId = "pYaYMmvepVNchFyjYf_S";
-// const devClientSecret = "ATZbjKNw_A";
-// request.get(
-//   {
-//     url:
-//       "https://openapi.naver.com/v1/search/local.json" +
-//       "?query=" +
-//       encodeURI("응암동"),
-//     json: true,
-//     headers: {
-//       "User-Agent": "request",
-//       "X-Naver-Client-Id": devClientId,
-//       "X-Naver-Client-Secret": devClientSecret,
-//     },
-//   },
-//   (err, data) => {
-//     if (err) {
-//       console.log("Error:", err);
-//     } else {
-//       // data is already parsed as JSON:
-//       console.log(data.body);
-//       // res.send(data.body.data);
-//     }
-//   }
-// );
-
-// exports.main = (req, res) => {
-//   let address = "응암동 427-101";
-//   var url =
-//     "https://naveropenapi.apigw.ntruss.com/map-geocode/v2/geocode" +
-//     "?query=" +
-//     encodeURI(address);
-//   request.get(
-//     {
-//       url: url,
-//       json: true,
-//       headers: {
-//         "User-Agent": "request",
-//         "X-NCP-APIGW-API-KEY-ID": clinetId,
-//         "X-NCP-APIGW-API-KEY": clinetSecret,
-//       },
-//     },
-//     (err, data) => {
-//       if (err) {
-//         console.log("Error:", err);
-//       } else if (res.statusCode !== 200) {
-//         console.log("Status:", res.statusCode);
-//       } else {
-//         // data is already parsed as JSON:
-//         console.log(data.body);
-//         res.send(data.body.data);
-//       }
-//     }
-//   );
-// };
 
 exports.insertUser = (req, res) => {
   console.log(req.body);
@@ -76,7 +16,7 @@ exports.insertUser = (req, res) => {
     // 겹치는 이메일이 없을 시
     if (!docs[0]) {
       // 등록
-      let sql = "INSERT INTO user_tbl values(?,?,?,?,NOW())";
+      let sql = "INSERT INTO user_tbl values(?,?,?,?,NOW(),0)";
       let setInfo = {
         dbName: "endangered",
         query: sql,
@@ -123,7 +63,7 @@ exports.login = (req, res) => {
   console.log(req.body);
 
   let loginSql =
-    "SELECT user_name, user_id, user_phone FROM user_tbl WHERE user_id = ? AND user_pw = ?";
+    "SELECT user_name, user_id, user_phone , is_admin FROM user_tbl WHERE user_id = ? AND user_pw = ?";
 
   let loginInfo = {
     dbName: "endangered",
@@ -136,7 +76,7 @@ exports.login = (req, res) => {
     if (!callback[0]) {
       res.send({
         status: false,
-        message: "이메일 또는 비밀번호를 다시 확인해주세요.",
+        message: "아이디 또는 비밀번호를 다시 확인해주세요.",
       });
     } else if (Object.keys(callback[0]).includes("user_id")) {
       req.session.loginData = callback[0];

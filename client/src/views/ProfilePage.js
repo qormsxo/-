@@ -3,7 +3,6 @@ import React, { useEffect, useState } from "react";
 import classNames from "classnames";
 // @material-ui/core components
 import { makeStyles } from "@material-ui/core/styles";
-
 import Header from "components/Header/Header.js";
 import Footer from "components/Footer/Footer.js";
 import Button from "components/CustomButtons/Button.js";
@@ -11,9 +10,7 @@ import GridContainer from "components/Grid/GridContainer.js";
 import GridItem from "components/Grid/GridItem.js";
 import HeaderLinks from "components/Header/HeaderLinks.js";
 import Parallax from "components/Parallax/Parallax.js";
-
 import { Pagination, PaginationItem, Stack } from "@mui/material";
-
 import styles from "assets/jss/material-kit-react/views/profilePage.js";
 import axios from "axios";
 import { DataGrid, useGridApiContext, useGridState } from "@mui/x-data-grid";
@@ -32,8 +29,11 @@ export default function ProfilePage(props) {
   const [sortModel, setSortModel] = useState([
     { field: "report_id", sort: "desc" },
   ]);
+  const [isAdmin, setIsAdmin] = useState(false);
   const nav = useNavigate();
-  useEffect(async () => {
+
+  // 세션 가져오기
+  const getSession = async () => {
     await axios
       .get("http://10.10.10.168:3001/session", {
         withCredentials: true,
@@ -43,6 +43,11 @@ export default function ProfilePage(props) {
         if (response.data) {
           setIsLoggedIn(true);
           setUserObj(response.data);
+          if (response.data.is_admin) {
+            setIsAdmin(true);
+          } else {
+            setIsAdmin(false);
+          }
           getReport(page, sortModel, response.data.user_id);
         } else {
           setIsLoggedIn(false);
@@ -52,6 +57,10 @@ export default function ProfilePage(props) {
       .catch((error) => {
         console.error(error);
       });
+  };
+
+  useEffect(() => {
+    getSession();
   }, []);
 
   const rowClick = (e) => {

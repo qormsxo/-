@@ -6,7 +6,6 @@ import { IMaskInput } from "react-imask";
 import PropTypes from "prop-types";
 import dayjs from "dayjs";
 import { makeStyles } from "@material-ui/core/styles";
-
 import Header from "components/Header/Header.js";
 import GridContainer from "components/Grid/GridContainer.js";
 import GridItem from "components/Grid/GridItem.js";
@@ -17,20 +16,16 @@ import HeaderLinks from "components/Header/HeaderLinks.js";
 import Footer from "components/Footer/Footer";
 import Grid from "@mui/material/Grid";
 import Button from "components/CustomButtons/Button.js";
-
 import styles from "assets/jss/material-kit-react/views/components.js";
 // import { PaginationItem } from "@mui/material";
 import Info from "components/Typography/Info";
 import { AddComment, Close } from "@material-ui/icons";
 import { OutlinedInput, TextField } from "@material-ui/core";
-
 import LocalizationProvider from "@mui/lab/LocalizationProvider";
 import AdapterDateFns from "@mui/lab/AdapterDateFns";
 import DesktopDatePicker from "@mui/lab/DesktopDatePicker";
-
 import { useNavigate, useParams } from "react-router-dom";
-
-import Kakaomap from "./Map";
+import Kakaomap from "../Map";
 import {
   Dialog,
   DialogActions,
@@ -39,6 +34,7 @@ import {
   IconButton,
 } from "@material-ui/core";
 import modalStyles from "assets/jss/material-kit-react/modalStyle";
+
 const useStyles = makeStyles(styles);
 const modalStyle = makeStyles(modalStyles);
 
@@ -73,7 +69,10 @@ function ReportDetail(props) {
   const [deleteModal, setDeleteModal] = useState(false); // 모달
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userObj, setUserObj] = useState({});
-  const [foundDate, setFoundDate] = useState(null);
+  const [foundDate, setFoundDate] = useState(null); // 발견날짜
+  const [isAnswer, setIsAnswer] = useState(false); // 답변 여부
+  const [answerContent, setAnswerContent] = useState(""); // 답변 내용
+  const [answerSpcs, setAnswerSpcs] = useState(""); // 답변 생물
 
   // 지도 관련
   const [searchKeyword, setSearchKeyword] = useState(""); // 지도 검색 인풋
@@ -88,9 +87,19 @@ function ReportDetail(props) {
     setPlace(searchKeyword);
   };
   // 위도 경도
+  const [firstCoordinates, setFirstCoordinates] = useState({
+    position: {
+      lat: "",
+      lng: "",
+    },
+    content: "",
+  });
   const [coordinates, setCoordinates] = useState({
-    lat: "",
-    lng: "",
+    position: {
+      lat: "",
+      lng: "",
+    },
+    content: "",
   });
 
   const [address, setAddress] = useState(""); //검색된 주소
@@ -98,11 +107,12 @@ function ReportDetail(props) {
   const setMarkers = (markers) => {
     //console.log(markers);
     if (markers.content) {
+      //
       setAddress(markers.content);
     } else {
       setAddress(markers.address);
     }
-    setCoordinates(markers.position);
+    setCoordinates(markers);
   };
 
   //////////////////////////////////////////////
@@ -187,7 +197,7 @@ function ReportDetail(props) {
         withCredentials: true,
       })
       .then((response) => {
-        console.log(response.data);
+        //console.log(response.data);
         var data = response.data;
         if (data.report_writer_id) {
           setWriterId(data.report_writer_id);
@@ -230,13 +240,22 @@ function ReportDetail(props) {
           setImgurl(data.imgurl);
         }
         // 위도 경도 정보가 있으면 세팅
-        if (data.report_location) {
-          //console.log(data.report_location);
-          let temp = data.report_location.split(",");
-          temp = { lat: Number(temp[0]), lng: Number(temp[1]) };
+        if (data.report_lat && data.report_lng) {
+          let temp = {
+            position: {
+              lat: Number(data.report_lat),
+              lng: Number(data.report_lng),
+            },
+            content: data.report_title,
+          };
 
-          setCoordinates(temp);
+          setFirstCoordinates(temp);
           setAddress(data.report_title);
+        }
+        setIsAnswer(data.report_check);
+        if (data.report_check) {
+          setAnswerContent(data.answer_content);
+          setAnswerSpcs(data.spcs_name);
         }
       });
   };
@@ -290,7 +309,6 @@ function ReportDetail(props) {
     ) {
       return;
     }
-    // console.log();
     const formData = new FormData(document.getElementsByName("reportForm")[0]); // form data 다넣기 multipart/form-data form 임
     if (beforeFileName !== "" && beforeFileName !== file.filename) {
       // 있던 첨부 파일을 첨부파일을 수정함
@@ -304,9 +322,10 @@ function ReportDetail(props) {
       formData.append("fileModify", false);
     }
 
-    if (coordinates.lat !== "" && coordinates.lng !== "") {
+    if (coordinates.position.lat !== "" && coordinates.position.lng !== "") {
       // 위도경도 추가
-      formData.append("coordinates", [coordinates.lat, coordinates.lng]);
+      formData.append("lat", coordinates.position.lat);
+      formData.append("lng", coordinates.position.lng);
     }
 
     await axios
@@ -315,7 +334,7 @@ function ReportDetail(props) {
       })
       .then((response) => {
         alert("수정되었습니다.");
-        nav("/report");
+        nav(0);
       })
       .catch((error) => {
         console.error(error);
@@ -323,7 +342,7 @@ function ReportDetail(props) {
   };
 
   const deleteReport = async () => {
-    console.log(imgurl);
+    //console.log(imgurl);
     await axios
       .delete(
         "http://10.10.10.168:3001/report",
@@ -338,7 +357,7 @@ function ReportDetail(props) {
       )
       .then((response) => {
         alert("삭제되었습니다.");
-        nav("/report");
+        nav(-1);
       })
       .catch((error) => {
         console.error(error);
@@ -404,21 +423,6 @@ function ReportDetail(props) {
                       onChange={handleChange}
                     />
                   </Grid>
-                  {/* <Grid item xs={1}>
-                    <h5 style={{ textAlign: "center" }}>연락처</h5>
-                  </Grid>
-                  <Grid item xs={5}>
-                    <OutlinedInput
-                      readOnly={readOnly}
-                      fullWidth
-                      variant="outlined"
-                      name="phone"
-                      inputComponent={phoneMask}
-                      value={values.phone}
-                      onChange={handleChange}
-                      inputProps={{ maxLength: 13 }}
-                    />
-                  </Grid> */}
                 </Grid>
               </div>
             ) : (
@@ -492,7 +496,7 @@ function ReportDetail(props) {
                 </Grid>
                 <Grid item xs={4}>
                   <OutlinedInput
-                    readOnly={readOnly}
+                    readOnly
                     fullWidth
                     name="foundLocation"
                     value={values.foundLocation}
@@ -564,8 +568,14 @@ function ReportDetail(props) {
                           <h5 style={{ textAlign: "center" }}>첨부파일</h5>
                         </Grid>
                         <Grid item xs={11}>
-                          <img src={imgurl} width={"100%"} height={"100%"} />
+                          <img
+                            src={imgurl}
+                            width={"100%"}
+                            height={"100%"}
+                            alt=""
+                          />
                         </Grid>
+
                         {btnHide ? null : (
                           <>
                             <Grid item xs={8}></Grid>
@@ -597,6 +607,45 @@ function ReportDetail(props) {
                             </Grid>
                           </>
                         )}
+                        {isAnswer ? (
+                          <>
+                            <Grid item xs={12}>
+                              <hr></hr>
+                            </Grid>
+                            {answerSpcs ? (
+                              <>
+                                <Grid item xs={1}>
+                                  <h5 style={{ textAlign: "left" }}>
+                                    생물 종류
+                                  </h5>
+                                </Grid>
+                                <Grid item xs={5}>
+                                  <OutlinedInput
+                                    fullWidth
+                                    readOnly
+                                    value={answerSpcs}
+                                  />
+                                </Grid>
+                                <Grid item xs={6} />
+                              </>
+                            ) : null}
+
+                            <Grid item xs={2}>
+                              <h5 style={{ textAlign: "left" }}>관리자 답변</h5>
+                            </Grid>
+                            <Grid item xs={10} />
+                            <Grid item xs={12}>
+                              <OutlinedInput
+                                readOnly
+                                value={answerContent}
+                                fullWidth
+                                name="content"
+                                multiline
+                                rows={8}
+                              />
+                            </Grid>
+                          </>
+                        ) : null}
                       </>
                     ) : (
                       <>
@@ -725,7 +774,7 @@ function ReportDetail(props) {
           <Kakaomap
             searchPlace={Place}
             func={setMarkers}
-            position={coordinates.lat ? coordinates : null}
+            position={firstCoordinates.position.lat ? firstCoordinates : null}
           />
         </DialogContent>
         <DialogActions className={modalClasses.modalFooter}>
@@ -734,7 +783,7 @@ function ReportDetail(props) {
             onClick={() => {
               setValues({
                 ...values,
-                ["foundLocation"]: address,
+                foundLocation: address,
               });
               setClassicModal(false);
               setAddress("");

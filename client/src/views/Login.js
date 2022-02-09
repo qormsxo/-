@@ -1,12 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-// @material-ui/core components
 import { makeStyles } from "@material-ui/core/styles";
 import InputAdornment from "@material-ui/core/InputAdornment";
-// import Icon from "@material-ui/core/Icon";
-// @material-ui/icons
 import People from "@material-ui/icons/People";
-
 import TextField from "@mui/material/TextField";
 import LockIcon from "@mui/icons-material/Lock";
 // core components
@@ -20,23 +16,9 @@ import Card from "components/Card/Card.js";
 import CardBody from "components/Card/CardBody.js";
 import CardHeader from "components/Card/CardHeader.js";
 import CardFooter from "components/Card/CardFooter.js";
-// import CustomInput from "components/CustomInput/CustomInput.js";
-
 import image from "assets/img/bg7.jpg";
 import styles from "assets/jss/material-kit-react/views/loginPage.js";
 import { useNavigate } from "react-router-dom";
-
-// import {
-//   Dialog,
-//   DialogActions,
-//   DialogContent,
-//   DialogTitle,
-//   IconButton,
-// } from "@material-ui/core";
-// // import Slide from "@material-ui/core/Slide";
-
-// import Close from "@material-ui/icons/Close";
-// import { Link } from "react-router-dom";
 
 const useStyles = makeStyles(styles);
 
@@ -46,13 +28,10 @@ export default function SignUp(props) {
     setCardAnimation("");
   }, 700);
 
-  const nav = useNavigate();
-  useEffect(async () => {
+  // 세션 가져오기
+  const getSession = async () => {
     await axios
       .get("http://10.10.10.168:3001/session", {
-        "Content-type": "application/json",
-        Accept: "application/json",
-        Cache: "no-cache",
         withCredentials: true,
       })
       .then((response) => {
@@ -63,10 +42,12 @@ export default function SignUp(props) {
       .catch((error) => {
         console.error(error);
       });
+  };
+  const nav = useNavigate();
+  useEffect(() => {
+    getSession();
   }, []);
-  //const [classicModal, setClassicModal] = React.useState(false); // 모달
 
-  // input state
   const [inputs, setInputs] = useState({
     name: "",
     userId: "",
@@ -171,11 +152,6 @@ export default function SignUp(props) {
       login();
     }
   };
-
-  //   const [name, setName] = useState("");
-  //   const [userId, setuserId] = useState("");
-  //   const [pw, setPw] = useState("");
-
   const classes = useStyles();
   const { ...rest } = props;
   return (

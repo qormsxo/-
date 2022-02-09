@@ -5,7 +5,6 @@ import axios from "axios";
 // import { Link } from "react-router-dom";
 import { DataGrid, useGridApiContext, useGridState } from "@mui/x-data-grid";
 import { makeStyles } from "@material-ui/core/styles";
-
 import Header from "components/Header/Header.js";
 import GridContainer from "components/Grid/GridContainer.js";
 import GridItem from "components/Grid/GridItem.js";
@@ -14,12 +13,9 @@ import Parallax from "components/Parallax/Parallax.js";
 import HeaderLinks from "components/Header/HeaderLinks.js";
 import Pagination from "@mui/material/Pagination";
 import Footer from "components/Footer/Footer";
-import Typography from "./MySections/TypographySection";
 // @material-ui/icons
 import SpaIcon from "@mui/icons-material/Spa";
-
 import styles from "assets/jss/material-kit-react/views/components.js";
-
 import { PaginationItem } from "@mui/material";
 import Success from "components/Typography/Success";
 import { useNavigate } from "react-router-dom";
@@ -40,7 +36,10 @@ function Report(props) {
   const [sortModel, setSortModel] = useState([
     { field: "report_id", sort: "desc" },
   ]);
-  useEffect(async () => {
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // 세션 가져오기
+  const getSession = async () => {
     await axios
       .get("http://10.10.10.168:3001/session", {
         withCredentials: true,
@@ -49,6 +48,11 @@ function Report(props) {
         //console.log(response.data);
         if (response.data) {
           setIsLoggedIn(true);
+          if (response.data.is_admin) {
+            setIsAdmin(true);
+          } else {
+            setIsAdmin(false);
+          }
           setUserObj(response.data);
         } else {
           setIsLoggedIn(false);
@@ -57,6 +61,10 @@ function Report(props) {
       .catch((error) => {
         console.error(error);
       });
+  };
+
+  useEffect(() => {
+    getSession();
     getReport(page, sortModel);
   }, []);
   const getReport = async (page, newModel) => {
@@ -127,6 +135,14 @@ function Report(props) {
       cellClassName: "MuiDataGrid-cell--textCenter",
       flex: 2,
     },
+    {
+      field: "report_check",
+      headerName: "관리자 확인",
+      headerAlign: "center",
+      headerClassName: "th",
+      cellClassName: "MuiDataGrid-cell--textCenter",
+      flex: 1,
+    },
   ];
   function CustomPagination() {
     const apiRef = useGridApiContext();
@@ -147,7 +163,11 @@ function Report(props) {
   }
   const nav = useNavigate();
   const rowClick = (e) => {
-    nav("/report-details" + e.row.report_id);
+    if (isAdmin) {
+      nav("/report-details/admin" + e.row.report_id);
+    } else {
+      nav("/report-details" + e.row.report_id);
+    }
   };
   return (
     <div style={{ background: "white" }}>
@@ -209,7 +229,7 @@ function Report(props) {
                 getReport(page, newModel);
                 setSortModel(newModel);
               }}
-              onCellDoubleClick={rowClick}
+              onCellClick={rowClick}
               disableColumnMenu // 컬럼 메뉴 비활성화
               components={{ Pagination: CustomPagination }}
               headerHeight={50} // th 크기

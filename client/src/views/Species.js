@@ -41,9 +41,9 @@ function Species(props) {
   const [rows, setRows] = useState([]);
   const [rowCount, setRowCount] = useState(0);
   const [page, setPage] = useState(0); //처음 페이지는 0
-  const [keyword, setKeyword] = useState(""); //처음 페이지는 0
+  const [keyword, setKeyword] = useState("");
   const [sortModel, setSortModel] = useState([
-    { field: "classification", sort: "desc" },
+    { field: "spcs_num", sort: "asc" },
   ]);
   useEffect(async () => {
     await axios
@@ -195,7 +195,6 @@ function Species(props) {
             <GridItem>
               <div className={classes.brand}>
                 <h3 className={classes.subtitle}>멸종위기종</h3>
-                {/* <h2 className={classes.title}>야생생물이 살아납니다!</h2> */}
               </div>
             </GridItem>
           </GridContainer>
@@ -297,7 +296,7 @@ function Species(props) {
               components={{ Pagination: CustomPagination }}
               headerHeight={50}
               rowsPerPageOptions={[12]}
-              onCellDoubleClick={rowClick}
+              onCellClick={rowClick}
               disableColumnMenu
               // checkboxSelection
             />
